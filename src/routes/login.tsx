@@ -31,7 +31,7 @@ function LoginPage() {
         onClick={handleLogin}
         style={{
           padding: '0.75rem 1.5rem',
-          backgroundColor: '#00aeff',
+          backgroundColor: '#0074e0',
           color: '#fff',
           borderRadius: '0.375rem',
           border: 'none',

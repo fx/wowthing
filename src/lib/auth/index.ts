@@ -26,6 +26,11 @@ export const auth = betterAuth({
                 Authorization: `Bearer ${tokens.accessToken}`,
               },
             });
+            if (!res.ok) {
+              throw new Error(
+                `Battle.net userinfo failed: ${res.status} ${res.statusText}`,
+              );
+            }
             const profile = (await res.json()) as {
               id: number;
               battletag: string;
@@ -34,7 +39,7 @@ export const auth = betterAuth({
               id: String(profile.id),
               name: profile.battletag,
               email: `${profile.id}@battlenet.placeholder`,
-              emailVerified: true,
+              emailVerified: false,
             };
           },
         },
