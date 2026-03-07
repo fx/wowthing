@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://wowthing:dev@postgres:5432/wowthing?sslmode=disable
+      BATTLENET_CLIENT_ID: ${BATTLENET_CLIENT_ID}
+      BATTLENET_CLIENT_SECRET: ${BATTLENET_CLIENT_SECRET}
+      BATTLENET_REDIRECT_URI: http://localhost:3000/api/auth/callback/battlenet
+      BETTER_AUTH_SECRET: dev-secret-change-in-production
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: wowthing
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: wowthing
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
