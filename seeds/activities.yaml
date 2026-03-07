@@ -1,0 +1,174 @@
+expansion: 11
+patch: "12.0.0"
+
+activities:
+  # === WEEKLY ===
+  - key: unity_quest
+    name: Unity
+    short_name: Unity
+    category: weekly
+    reset_type: weekly
+    description: "Complete one of the rotating Midnight weekly quests"
+    quest_ids: [93890, 93767, 94457, 93909, 93911, 93769, 93891, 93910, 93912, 93889, 93892, 93913, 93766]
+    threshold: 1
+    metadata:
+      min_level: 90
+
+  - key: hope_quest
+    name: Hope in the Darkest Corners
+    short_name: Hope
+    category: weekly
+    reset_type: weekly
+    quest_ids: [95468]
+    threshold: 1
+    metadata:
+      min_level: 80
+      max_level: 89
+
+  - key: special_assignment_1
+    name: Special Assignment 1
+    short_name: SA1
+    category: weekly
+    reset_type: weekly
+    quest_ids: [91390, 91796, 92063, 92139, 92145, 93013, 93244, 93438]
+    threshold: 1
+    metadata:
+      unlock_quest_ids: [94865, 94866, 94390, 95435, 92848, 94391, 94795, 94743]
+
+  - key: special_assignment_2
+    name: Special Assignment 2
+    short_name: SA2
+    category: weekly
+    reset_type: weekly
+    quest_ids: [91390, 91796, 92063, 92139, 92145, 93013, 93244, 93438]
+    threshold: 1
+    metadata:
+      unlock_quest_ids: [94865, 94866, 94390, 95435, 92848, 94391, 94795, 94743]
+      slot: 2
+
+  - key: dungeon_weekly
+    name: Dungeon Weekly
+    short_name: Dungeon
+    category: weekly
+    reset_type: weekly
+    description: "Complete the specified dungeon (Halduron Brightwing quest)"
+    quest_ids: [93751, 93752, 93753, 93754, 93755, 93756, 93757, 93758]
+    threshold: 1
+    account_wide: true
+
+  - key: prey_hunts
+    name: Prey Hunts
+    short_name: Prey
+    category: weekly
+    reset_type: weekly
+    description: "Complete 4 hunts for maximum efficiency"
+    threshold: 4
+    metadata:
+      track_count: true
+
+  # === VAULT ===
+  - key: vault_mythic_plus
+    name: "Great Vault: Mythic+"
+    short_name: "Vault M+"
+    category: weekly
+    reset_type: weekly
+    metadata:
+      source: vault_api
+      thresholds: [1, 4, 8]
+
+  - key: vault_raid
+    name: "Great Vault: Raid"
+    short_name: "Vault Raid"
+    category: weekly
+    reset_type: weekly
+    metadata:
+      source: vault_api
+      thresholds: [2, 4, 6]
+
+  - key: vault_world
+    name: "Great Vault: World"
+    short_name: "Vault World"
+    category: weekly
+    reset_type: weekly
+    metadata:
+      source: vault_api
+      thresholds: [2, 4, 8]
+
+  # === CURRENCIES (weekly-capped) ===
+  - key: dawncrest_adventurer
+    name: Adventurer Dawncrest
+    short_name: Adv
+    category: weekly
+    reset_type: weekly
+    metadata: { source: currency_api, currency_id: 3383, weekly_cap: 100 }
+
+  - key: dawncrest_veteran
+    name: Veteran Dawncrest
+    short_name: Vet
+    category: weekly
+    reset_type: weekly
+    metadata: { source: currency_api, currency_id: 3341, weekly_cap: 100 }
+
+  - key: dawncrest_champion
+    name: Champion Dawncrest
+    short_name: Champ
+    category: weekly
+    reset_type: weekly
+    metadata: { source: currency_api, currency_id: 3343, weekly_cap: 100 }
+
+  - key: dawncrest_hero
+    name: Hero Dawncrest
+    short_name: Hero
+    category: weekly
+    reset_type: weekly
+    metadata: { source: currency_api, currency_id: 3345, weekly_cap: 100 }
+
+  - key: dawncrest_myth
+    name: Myth Dawncrest
+    short_name: Myth
+    category: weekly
+    reset_type: weekly
+    metadata: { source: currency_api, currency_id: 3348, weekly_cap: 100 }
+
+  # === DAILY ===
+  - key: bountiful_delves
+    name: Bountiful Delves
+    short_name: Bountiful
+    category: daily
+    reset_type: daily
+    description: "Complete bountiful delves (4 available daily)"
+    metadata: { track_count: true, daily_limit: 4 }
+
+  # === RAID LOCKOUTS ===
+  - key: lockout_voidspire
+    name: Voidspire
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 16340, boss_count: 6, difficulties: [normal, heroic, mythic] }
+
+  - key: lockout_dreamrift
+    name: Dreamrift
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 16531, boss_count: 1, difficulties: [normal, heroic, mythic] }
+
+  - key: lockout_quel_danas
+    name: "March on Quel'Danes"
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 16215, boss_count: 2, difficulties: [normal, heroic, mythic] }
+
+# === RENOWN FACTIONS ===
+renown:
+  - name: Silvermoon Court
+    zone: Eversong Woods
+    max_level: 20
+  - name: Amani Tribe
+    zone: Zul'Aman
+    max_level: 20
+  - name: Hara'ti
+    zone: Harandar
+    max_level: 20
+  - name: Singularity
+    zone: Voidstorm
+    max_level: 20
