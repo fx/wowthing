@@ -1,5 +1,8 @@
 import { createMiddleware } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
+import { eq } from 'drizzle-orm';
+import { db } from '~/db';
+import { users } from '~/db/schema';
 import { auth } from './index';
 
 export const authMiddleware = createMiddleware({ type: 'function' }).server(
@@ -17,10 +20,15 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(
       });
     }
 
+    // Resolve the app user by Better Auth user ID
+    const appUser = await db.query.users.findFirst({
+      where: eq(users.betterAuthUserId, session.user.id),
+    });
+
     return next({
       context: {
         session,
-        userId: session.user.id,
+        userId: appUser ? String(appUser.id) : session.user.id,
       },
     });
   },
