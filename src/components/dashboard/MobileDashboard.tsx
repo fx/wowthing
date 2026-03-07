@@ -1,7 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@fx/ui';
 import { CharacterName } from '~/components/shared/CharacterName';
-import { cn } from '~/lib/utils';
-import { CELL_COLORS, type ActivityState } from '~/lib/utils';
+import { cn, CELL_COLORS, type ActivityState } from '~/lib/utils';
 import type { DashboardData } from '~/server/functions/activities';
 import type { VaultSlot, Lockout } from '~/db/types';
 
