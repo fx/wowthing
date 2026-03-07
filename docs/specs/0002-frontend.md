@@ -1310,16 +1310,16 @@ export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
   - [x] Only show rows where at least one character has a lockout; hide entire section if no lockouts
 - [x] Dashboard Section: Daily Activities
   - [x] Implement `src/components/dashboard/DailySection.tsx` — list of daily activities with descriptions
-- [ ] Upload page
-  - [ ] Implement `src/routes/upload.tsx` — auth-guarded route with drag-and-drop zone
-  - [ ] Handle file validation (`.lua` extension check), drag states, upload status (idle/uploading/done/error)
-  - [ ] Call `uploadAddonData` server function, show character count on success
-  - [ ] Invalidate dashboard queries on successful upload (`queryClient.invalidateQueries`)
-- [ ] Mobile responsive layout (per-activity cards)
-  - [ ] Implement `src/components/dashboard/MobileDashboard.tsx` — per-activity Card layout with character rows inside each card
-  - [ ] Implement `MobileCharacterRow` — shared row component (class-colored name left, status right)
-  - [ ] Implement mobile activity cards: `MobileVaultCard`, `MobileWeeklyCard`, `MobileCrestCard`, `MobileKeystoneCard`, `MobileLockoutCard`, `MobileDailyCard`
-  - [ ] Wire `Dashboard.tsx` to switch between desktop MatrixGrid and mobile activity cards at 768px breakpoint
+- [x] Upload page
+  - [x] Implement `src/routes/upload.tsx` — auth-guarded route with drag-and-drop zone
+  - [x] Handle file validation (`.lua` extension check), drag states, upload status (idle/uploading/done/error)
+  - [x] Call `uploadAddonData` server function, show character count on success
+  - [x] Invalidate dashboard queries on successful upload (`queryClient.invalidateQueries`)
+- [x] Mobile responsive layout (per-activity cards)
+  - [x] Implement `src/components/dashboard/MobileDashboard.tsx` — per-activity Card layout with character rows inside each card
+  - [x] Implement `MobileCharacterRow` — shared row component (class-colored name left, status right)
+  - [x] Implement mobile activity cards: `MobileVaultCard`, `MobileWeeklyCard`, `MobileCrestCard`, `MobileKeystoneCard`, `MobileLockoutCard`, `MobileDailyCard`
+  - [x] Wire `Dashboard.tsx` to switch between desktop MatrixGrid and mobile activity cards at 768px breakpoint
 
 ## Open Questions
 
