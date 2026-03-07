@@ -1,4 +1,11 @@
 import PgBoss from 'pg-boss';
+import { syncUserProfile } from '~/lib/blizzard/sync-profile';
+import {
+  syncCharacterProfile,
+  syncCharacterQuests,
+  syncCharacterReputations,
+} from '~/lib/blizzard/sync';
+import { scheduleCharacterSyncs } from '~/lib/blizzard/scheduler';
 
 export type JobRegistry = {
   'sync-user-profile': { userId: number; accessToken: string; region: string };
@@ -33,37 +40,49 @@ export async function startBoss(): Promise<PgBoss> {
   await boss.start();
   bossInstance = boss;
 
-  // --- Sync workers (stubs -- actual implementations come in later tasks) ---
+  // --- Sync workers ---
 
   await boss.work<JobRegistry['sync-user-profile']>(
     'sync-user-profile',
     { batchSize: 2 },
-    async (_jobs) => {
-      // TODO: implement in Wave 4a
+    async (jobs) => {
+      for (const job of jobs) {
+        await syncUserProfile(
+          job.data.userId,
+          job.data.accessToken,
+          job.data.region,
+        );
+      }
     },
   );
 
   await boss.work<JobRegistry['sync-character-profile']>(
     'sync-character-profile',
     { batchSize: 5 },
-    async (_jobs) => {
-      // TODO: implement in Wave 4a
+    async (jobs) => {
+      for (const job of jobs) {
+        await syncCharacterProfile(job.data.characterId, job.data.region);
+      }
     },
   );
 
   await boss.work<JobRegistry['sync-character-quests']>(
     'sync-character-quests',
     { batchSize: 5 },
-    async (_jobs) => {
-      // TODO: implement in Wave 4a
+    async (jobs) => {
+      for (const job of jobs) {
+        await syncCharacterQuests(job.data.characterId, job.data.region);
+      }
     },
   );
 
   await boss.work<JobRegistry['sync-character-reputations']>(
     'sync-character-reputations',
     { batchSize: 5 },
-    async (_jobs) => {
-      // TODO: implement in Wave 4a
+    async (jobs) => {
+      for (const job of jobs) {
+        await syncCharacterReputations(job.data.characterId, job.data.region);
+      }
     },
   );
 
@@ -79,7 +98,7 @@ export async function startBoss(): Promise<PgBoss> {
 
   await boss.schedule('schedule-syncs', '* * * * *');
   await boss.work('schedule-syncs', async () => {
-    // TODO: implement scheduler in Wave 4a
+    await scheduleCharacterSyncs(boss);
   });
 
   await boss.schedule('session-cleanup', '0 3 * * *');

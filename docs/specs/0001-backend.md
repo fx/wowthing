@@ -1196,19 +1196,19 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Port `LuaToJsonConverter4` from C# to TypeScript (`src/lib/addon/lua-parser.ts`)
   - [x] Handle: nested tables, `["key"] = value`, `[123] = value`, Lua comments, trailing commas, `WWTCSaved =` prefix
   - [x] Write tests for the parser against sample SavedVariables output
-- [ ] Addon upload pipeline: Zod schemas and server function
-  - [ ] Write Zod schemas for addon data (`src/lib/addon/schema.ts` — currencyString, progressQuest, lockout, uploadCharacter, upload)
-  - [ ] Implement `uploadAddonData` server function (`src/server/functions/upload.ts`) — parse Lua, validate, enqueue pg-boss job
-- [ ] Addon upload pipeline: processing job
-  - [ ] Implement `processAddonUpload` entry point with ownership verification (`src/lib/addon/processor.ts`)
-  - [ ] Implement `processCharacterCurrencies` — upsert currencies table with weekly cap data
-  - [ ] Implement `processCharacterQuests` — insert daily + weekly quest completions
-  - [ ] Implement `processCharacterWeekly` — upsert weekly_activities (vault, keystone, lockouts)
-  - [ ] Handle difficulty ID mapping (7=LFR, 14=normal, 15=heroic, 16=mythic) and vault tier mapping (t1=M+, t3=Raid, t6=World)
-- [ ] Server functions for frontend
-  - [ ] Implement `getDashboardData` — parallel queries for characters (with relations), activity definitions, renown; return reset timestamps (`src/server/functions/activities.ts`)
-  - [ ] Implement `triggerSync` — enqueue user profile sync job (`src/server/functions/sync.ts`)
-  - [ ] Export `DashboardData` type for frontend consumption
+- [x] Addon upload pipeline: Zod schemas and server function
+  - [x] Write Zod schemas for addon data (`src/lib/addon/schema.ts` — currencyString, progressQuest, lockout, uploadCharacter, upload)
+  - [x] Implement `uploadAddonData` server function (`src/server/functions/upload.ts`) — parse Lua, validate, enqueue pg-boss job
+- [x] Addon upload pipeline: processing job
+  - [x] Implement `processAddonUpload` entry point with ownership verification (`src/lib/addon/processor.ts`)
+  - [x] Implement `processCharacterCurrencies` — upsert currencies table with weekly cap data
+  - [x] Implement `processCharacterQuests` — insert daily + weekly quest completions
+  - [x] Implement `processCharacterWeekly` — upsert weekly_activities (vault, keystone, lockouts)
+  - [x] Handle difficulty ID mapping (7=LFR, 14=normal, 15=heroic, 16=mythic) and vault tier mapping (t1=M+, t3=Raid, t6=World)
+- [x] Server functions for frontend
+  - [x] Implement `getDashboardData` — parallel queries for characters (with relations), activity definitions, renown; return reset timestamps (`src/server/functions/activities.ts`)
+  - [x] Implement `triggerSync` — enqueue user profile sync job (`src/server/functions/sync.ts`)
+  - [x] Export `DashboardData` type for frontend consumption
 
 ## Open Questions
 
