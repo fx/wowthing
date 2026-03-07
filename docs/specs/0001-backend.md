@@ -1158,10 +1158,10 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Create database connection module (`src/db/index.ts` — drizzle + postgres.js)
   - [x] Configure `drizzle.config.ts` (schemaFilter: `['public']` to exclude pgboss)
   - [x] Run `bun db:generate` and `bun db:migrate` to create initial migration and apply it
-- [ ] WoW static data and reset utilities
-  - [ ] Write `src/lib/wow/classes.ts` (CLASS_COLORS for all 13 classes)
-  - [ ] Write `src/lib/wow/constants.ts` (CHARACTER_MAX_LEVEL, CURRENT_EXPANSION, MYTHIC_PLUS_SEASON)
-  - [ ] Implement `src/lib/activities/resets.ts` (getNextWeeklyReset, getNextDailyReset, getCurrentResetWeek, getTodayDate) per region config
+- [x] WoW static data and reset utilities
+  - [x] Write `src/lib/wow/classes.ts` (CLASS_COLORS for all 13 classes)
+  - [x] Write `src/lib/wow/constants.ts` (CHARACTER_MAX_LEVEL, CURRENT_EXPANSION, MYTHIC_PLUS_SEASON)
+  - [x] Implement `src/lib/activities/resets.ts` (getNextWeeklyReset, getNextDailyReset, getCurrentResetWeek, getTodayDate) per region config
 - [ ] Activity seed system
   - [ ] Write `seeds/activities.yaml` with all Midnight S1 activities (quest IDs, currency IDs, instance IDs from poc.md section 12)
   - [ ] Implement `src/db/seed.ts` — YAML parser, idempotent upsert on `activity_definitions.key`
@@ -1192,10 +1192,10 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [ ] Implement token refresh logic for expired Blizzard access tokens
 - [ ] Blizzard API scheduler
   - [ ] Implement `scheduleCharacterSyncs` — query sync_state for due characters, enqueue jobs with singletonKey dedup (`src/lib/blizzard/scheduler.ts`)
-- [ ] Addon upload pipeline: Lua parser
-  - [ ] Port `LuaToJsonConverter4` from C# to TypeScript (`src/lib/addon/lua-parser.ts`)
-  - [ ] Handle: nested tables, `["key"] = value`, `[123] = value`, Lua comments, trailing commas, `WWTCSaved =` prefix
-  - [ ] Write tests for the parser against sample SavedVariables output
+- [x] Addon upload pipeline: Lua parser
+  - [x] Port `LuaToJsonConverter4` from C# to TypeScript (`src/lib/addon/lua-parser.ts`)
+  - [x] Handle: nested tables, `["key"] = value`, `[123] = value`, Lua comments, trailing commas, `WWTCSaved =` prefix
+  - [x] Write tests for the parser against sample SavedVariables output
 - [ ] Addon upload pipeline: Zod schemas and server function
   - [ ] Write Zod schemas for addon data (`src/lib/addon/schema.ts` — currencyString, progressQuest, lockout, uploadCharacter, upload)
   - [ ] Implement `uploadAddonData` server function (`src/server/functions/upload.ts`) — parse Lua, validate, enqueue pg-boss job
