@@ -1,4 +1,4 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '~/db';
 import {
   accounts,
@@ -17,12 +17,6 @@ const DIFFICULTY_MAP: Record<number, Lockout['difficulty']> = {
   14: 'normal',
   15: 'heroic',
   16: 'mythic',
-};
-
-const VAULT_TIER_MAP: Record<string, 'dungeon' | 'raid' | 'world'> = {
-  t1: 'dungeon',
-  t3: 'raid',
-  t6: 'world',
 };
 
 export async function processAddonUpload(
