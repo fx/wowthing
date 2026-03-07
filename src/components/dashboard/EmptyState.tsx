@@ -14,11 +14,13 @@ export function EmptyState() {
             characters here.
           </p>
           <div className="flex gap-2">
-            <a href="/upload" className="flex-1">
-              <TypedButton variant="default" className="w-full">
-                Upload Addon Data
-              </TypedButton>
-            </a>
+            <TypedButton
+              variant="default"
+              className="w-full flex-1"
+              onClick={() => { window.location.href = '/upload'; }}
+            >
+              Upload Addon Data
+            </TypedButton>
             <TypedButton
               variant="outline"
               onClick={() => window.location.reload()}

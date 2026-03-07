@@ -41,7 +41,7 @@ export function MatrixGrid({
                     type="button"
                     onClick={() => onToggleCollapse(String(char.id))}
                     className="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 text-xs"
-                    title={`Expand ${char.name}`}
+                    aria-label={`Expand ${char.name}`}
                   >
                     +
                   </button>
@@ -52,7 +52,7 @@ export function MatrixGrid({
                       type="button"
                       onClick={() => onToggleCollapse(String(char.id))}
                       className="text-[10px] text-muted-foreground hover:text-foreground"
-                      title="Collapse column"
+                      aria-label={`Collapse ${char.name}`}
                     >
                       -
                     </button>

@@ -46,8 +46,21 @@ export function CrestTracker({
                     const currency = char.currencies?.find(
                       (c) => c.currencyId === tier.id,
                     );
-                    const weekQty = currency?.weekQuantity ?? 0;
-                    const weekMax = currency?.weekMax ?? 100;
+
+                    if (!currency || currency.weekMax == null) {
+                      return (
+                        <StatusCell
+                          key={char.id}
+                          state="not-started"
+                          label={'\u2014'}
+                          tooltip={`${char.name} ${tier.name}: \u2014`}
+                          collapsed={isCollapsed(char.id)}
+                        />
+                      );
+                    }
+
+                    const weekQty = currency.weekQuantity ?? 0;
+                    const weekMax = currency.weekMax;
                     const pct = weekMax > 0 ? weekQty / weekMax : 0;
                     const state =
                       pct >= 1

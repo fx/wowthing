@@ -4,8 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
-import { cn } from '~/lib/utils';
-import { CELL_COLORS, type ActivityState } from '~/lib/utils';
+import { cn, CELL_COLORS, type ActivityState } from '~/lib/utils';
 
 interface StatusCellProps {
   state: ActivityState;
@@ -23,6 +22,7 @@ export function StatusCell({ state, label, tooltip, collapsed }: StatusCellProps
         <Tooltip>
           <TooltipTrigger asChild>
             <div
+              tabIndex={0}
               className={cn(
                 'inline-flex items-center justify-center rounded-sm text-[11px] font-medium min-w-5 h-5 px-1',
                 CELL_COLORS[state],

@@ -54,7 +54,7 @@ export function WeeklyChecklist({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span>{activity.shortName}</span>
+                          <span tabIndex={0}>{activity.shortName}</span>
                         </TooltipTrigger>
                         <TooltipContent>
                           {activity.description ?? activity.name}

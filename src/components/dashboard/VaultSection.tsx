@@ -117,6 +117,7 @@ function VaultDots({
             <Tooltip key={i}>
               <TooltipTrigger asChild>
                 <div
+                  tabIndex={0}
                   className={cn(
                     'h-2.5 w-2.5 rounded-full',
                     filled ? 'bg-emerald-500' : 'bg-zinc-700',
