@@ -1151,13 +1151,13 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Set up `global.css` with Tailwind v4 + `@fx/ui/styles` import
   - [x] Create placeholder root layout (`__root.tsx`) and index route (`index.tsx`)
   - [x] Verify `bun dev` boots the app and renders the placeholder page
-- [ ] Database schema and migrations
-  - [ ] Write complete Drizzle schema (`src/db/schema.ts`) — all 10 tables with indexes, constraints, JSONB columns
-  - [ ] Define Drizzle relations for relational query builder (`usersRelations`, `accountsRelations`, `charactersRelations`, etc.)
-  - [ ] Write JSONB types (`src/db/types.ts` — `VaultSlot`, `Lockout`)
-  - [ ] Create database connection module (`src/db/index.ts` — drizzle + postgres.js)
-  - [ ] Configure `drizzle.config.ts` (schemaFilter: `['public']` to exclude pgboss)
-  - [ ] Run `bun db:generate` and `bun db:migrate` to create initial migration and apply it
+- [x] Database schema and migrations
+  - [x] Write complete Drizzle schema (`src/db/schema.ts`) — all 10 tables with indexes, constraints, JSONB columns
+  - [x] Define Drizzle relations for relational query builder (`usersRelations`, `accountsRelations`, `charactersRelations`, etc.)
+  - [x] Write JSONB types (`src/db/types.ts` — `VaultSlot`, `Lockout`)
+  - [x] Create database connection module (`src/db/index.ts` — drizzle + postgres.js)
+  - [x] Configure `drizzle.config.ts` (schemaFilter: `['public']` to exclude pgboss)
+  - [x] Run `bun db:generate` and `bun db:migrate` to create initial migration and apply it
 - [ ] WoW static data and reset utilities
   - [ ] Write `src/lib/wow/classes.ts` (CLASS_COLORS for all 13 classes)
   - [ ] Write `src/lib/wow/constants.ts` (CHARACTER_MAX_LEVEL, CURRENT_EXPANSION, MYTHIC_PLUS_SEASON)
