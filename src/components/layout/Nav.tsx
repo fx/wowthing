@@ -1,20 +1,22 @@
 import {
-  Button,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@fx/ui';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { ResetTimers } from './ResetTimers';
+import { TypedButton } from '~/components/shared/TypedButton';
 import { useMediaQuery } from '~/hooks/useMediaQuery';
 import { authClient } from '~/lib/auth/client';
+import { getNextDailyReset, getNextWeeklyReset } from '~/lib/activities/resets';
 import { triggerSync } from '~/server/functions/sync';
 
 export function Nav() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
 
   const handleSync = async () => {
     await triggerSync();
@@ -25,9 +27,12 @@ export function Nav() {
     window.location.href = '/login';
   };
 
-  // Placeholder reset times — will be replaced with real data from dashboard loader
-  const nextWeeklyReset = getNextResetISO('weekly');
-  const nextDailyReset = getNextResetISO('daily');
+  const handleUpload = () => {
+    navigate({ to: '/upload' as string });
+  };
+
+  const nextWeeklyReset = getNextWeeklyReset('us').toISOString();
+  const nextDailyReset = getNextDailyReset('us').toISOString();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -45,17 +50,16 @@ export function Nav() {
           {!isPending && session && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                {/* @ts-expect-error -- @fx/ui Button accepts children at runtime; Base UI types omit it */}
-                <Button variant="ghost" size="sm">
+                <TypedButton variant="ghost" size="sm">
                   {session.user.name ?? 'Account'}
-                </Button>
+                </TypedButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleSync}>
                   Sync Now
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <a href="/upload">Upload Addon Data</a>
+                <DropdownMenuItem onClick={handleUpload}>
+                  Upload Addon Data
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
@@ -74,29 +78,4 @@ export function Nav() {
       )}
     </nav>
   );
-}
-
-function getNextResetISO(type: 'weekly' | 'daily'): string {
-  const now = new Date();
-  const reset = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      15, 0, 0, 0,
-    ),
-  );
-
-  if (type === 'weekly') {
-    // Advance to next Tuesday
-    while (reset.getUTCDay() !== 2 || reset <= now) {
-      reset.setUTCDate(reset.getUTCDate() + 1);
-    }
-  } else {
-    if (reset <= now) {
-      reset.setUTCDate(reset.getUTCDate() + 1);
-    }
-  }
-
-  return reset.toISOString();
 }

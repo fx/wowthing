@@ -30,9 +30,9 @@ function RootLayout() {
       </head>
       <body className="bg-background text-foreground min-h-screen antialiased">
         <Nav />
-        <main className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
           <Outlet />
-        </main>
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>

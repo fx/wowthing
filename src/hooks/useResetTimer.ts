@@ -2,16 +2,25 @@ import { useState, useEffect } from 'react';
 
 export function useResetTimer(resetTime: string): string {
   const target = new Date(resetTime).getTime();
-  const [remaining, setRemaining] = useState(() => formatDiff(target - Date.now()));
+  const isValidTarget = Number.isFinite(target);
+  const [remaining, setRemaining] = useState(() =>
+    isValidTarget ? formatDiff(target - Date.now()) : '\u2014',
+  );
 
   useEffect(() => {
+    if (!isValidTarget) {
+      setRemaining('\u2014');
+      return;
+    }
+
     const interval = setInterval(() => {
       const diff = target - Date.now();
       setRemaining(diff <= 0 ? 'Reset!' : formatDiff(diff));
       if (diff <= 0) clearInterval(interval);
     }, 1000);
+
     return () => clearInterval(interval);
-  }, [target]);
+  }, [target, isValidTarget]);
 
   return remaining;
 }

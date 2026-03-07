@@ -22,9 +22,11 @@ export function getActivityState(
   isComplete: boolean,
   isAccountWide: boolean,
   hoursUntilReset: number,
+  progress?: { current: number; max: number },
 ): ActivityState {
   if (isComplete && isAccountWide) return 'account-done';
   if (isComplete) return 'complete';
+  if (progress && progress.current > 0 && progress.current < progress.max) return 'in-progress';
   if (hoursUntilReset < 6) return 'urgent';
   return 'not-started';
 }
