@@ -3,7 +3,6 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-  ScrollRestoration,
 } from '@tanstack/react-router';
 import globalCssUrl from '~/global.css?url';
 import { Nav } from '~/components/layout/Nav';
@@ -33,7 +32,6 @@ function RootLayout() {
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           <Outlet />
         </div>
-        <ScrollRestoration />
         <Scripts />
       </body>
     </html>

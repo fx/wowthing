@@ -3,9 +3,7 @@ import { useState, useEffect } from 'react';
 export function useResetTimer(resetTime: string): string {
   const target = new Date(resetTime).getTime();
   const isValidTarget = Number.isFinite(target);
-  const [remaining, setRemaining] = useState(() =>
-    isValidTarget ? formatDiff(target - Date.now()) : '\u2014',
-  );
+  const [remaining, setRemaining] = useState('\u2014');
 
   useEffect(() => {
     if (!isValidTarget) {
@@ -13,10 +11,15 @@ export function useResetTimer(resetTime: string): string {
       return;
     }
 
-    const interval = setInterval(() => {
+    const update = () => {
       const diff = target - Date.now();
       setRemaining(diff <= 0 ? 'Reset!' : formatDiff(diff));
-      if (diff <= 0) clearInterval(interval);
+      return diff;
+    };
+
+    update();
+    const interval = setInterval(() => {
+      if (update() <= 0) clearInterval(interval);
     }, 1000);
 
     return () => clearInterval(interval);
