@@ -1269,9 +1269,9 @@ export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
   - [x] Create `src/hooks/useMediaQuery.ts` — responsive breakpoint hook
   - [x] Create `src/hooks/useResetTimer.ts` — countdown timer hook with 1s interval
   - [x] Create `src/hooks/useCollapsedColumns.ts` — localStorage-backed collapsed column state
-- [ ] Matrix grid system (desktop)
-  - [ ] Implement `src/components/dashboard/MatrixGrid.tsx` — shared wrapper with sticky first column, horizontal scroll, per-character column collapse toggle
-  - [ ] Implement `src/components/dashboard/StatusCell.tsx` — dense colored indicator cell with tooltip
+- [x] Matrix grid system (desktop)
+  - [x] Implement `src/components/dashboard/MatrixGrid.tsx` — shared wrapper with sticky first column, horizontal scroll, per-character column collapse toggle
+  - [x] Implement `src/components/dashboard/StatusCell.tsx` — dense colored indicator cell with tooltip
   - [ ] Verify horizontal scroll + sticky column behavior with 10+ character columns
 - [x] Root layout and navigation
   - [x] Implement `src/routes/__root.tsx` — html/head/body shell with `<Nav />` and `<Outlet />`
@@ -1281,35 +1281,35 @@ export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
   - [x] Handle mobile nav layout (reset timers below nav bar, Sheet for menu if needed)
 - [x] Login page
   - [x] Implement `src/routes/login.tsx` — centered Card with Battle.net login Button linking to `/api/auth/signin/battlenet`
-- [ ] Dashboard route and data loading
-  - [ ] Implement `src/routes/index.tsx` — `beforeLoad` auth guard, loader calling `getDashboardData()`, `staleTime: 60_000`
-  - [ ] Implement `src/components/dashboard/Dashboard.tsx` — top-level component that switches between `DesktopDashboard` (with collapse state) and `MobileDashboard` at 768px
-  - [ ] Implement `src/components/dashboard/EmptyState.tsx` — shown when no characters exist, links to upload page
+- [x] Dashboard route and data loading
+  - [x] Implement `src/routes/index.tsx` — loader calling `getDashboardData()`, `staleTime: 60_000` (auth handled by server middleware)
+  - [x] Implement `src/components/dashboard/Dashboard.tsx` — top-level component that switches between `DesktopDashboard` (with collapse state) and mobile placeholder at 768px
+  - [x] Implement `src/components/dashboard/EmptyState.tsx` — shown when no characters exist, links to upload page
 - [x] Shared components
   - [x] Implement `src/components/shared/CharacterName.tsx` — character name with class color styling
-- [ ] Dashboard Section: Great Vault
-  - [ ] Implement `src/components/dashboard/VaultSection.tsx` — MatrixGrid with M+/Raid/World rows
-  - [ ] Implement `VaultDots` sub-component — 3 compact dots per tier with Tooltip showing progress and ilvl
-  - [ ] Implement `VaultRow` sub-component — renders one vault type across all characters, respects collapsed state
-- [ ] Dashboard Section: Weekly Checklist
-  - [ ] Implement `src/components/dashboard/WeeklyChecklist.tsx` — MatrixGrid with activity rows × character StatusCells
-  - [ ] Implement `resolveActivityStatus` — resolves completion from quest_completions, handles threshold counts and account-wide status
-  - [ ] Filter out vault/currency/lockout activities (they have dedicated sections)
-- [ ] Dashboard Section: Dawncrest Currency Caps
-  - [ ] Implement `src/components/dashboard/CrestTracker.tsx` — MatrixGrid with 5 tier rows, StatusCells showing `qty` label
-  - [ ] Wire currency IDs (3383, 3341, 3343, 3345, 3348) to character currency data
-- [ ] Dashboard Section: Keystone Display
-  - [ ] Implement `src/components/dashboard/KeystoneDisplay.tsx` — compact display of current keystone dungeon + level per character
-  - [ ] Hide section entirely if no characters have keystones
-- [ ] Dashboard Section: Renown
-  - [ ] Implement `src/components/dashboard/RenownSection.tsx` — 4 faction Progress bars (Silvermoon Court, Amani Tribe, Hara'ti, Singularity) showing level/20
-  - [ ] Hide section if no renown data exists
-- [ ] Dashboard Section: Raid Lockouts
-  - [ ] Implement `src/components/dashboard/LockoutGrid.tsx` — MatrixGrid with raid×difficulty rows, StatusCells showing `killed/total`
-  - [ ] Wire raid instance IDs (16340, 16531, 16215) and difficulty mapping
-  - [ ] Only show rows where at least one character has a lockout; hide entire section if no lockouts
-- [ ] Dashboard Section: Daily Activities
-  - [ ] Implement `src/components/dashboard/DailySection.tsx` — list of daily activities with descriptions
+- [x] Dashboard Section: Great Vault
+  - [x] Implement `src/components/dashboard/VaultSection.tsx` — MatrixGrid with M+/Raid/World rows
+  - [x] Implement `VaultDots` sub-component — 3 compact dots per tier with Tooltip showing progress and ilvl
+  - [x] Implement `VaultRow` sub-component — renders one vault type across all characters, respects collapsed state
+- [x] Dashboard Section: Weekly Checklist
+  - [x] Implement `src/components/dashboard/WeeklyChecklist.tsx` — MatrixGrid with activity rows × character StatusCells
+  - [x] Implement `resolveActivityStatus` — resolves completion from quest_completions, handles threshold counts and account-wide status
+  - [x] Filter out vault/currency/lockout activities (they have dedicated sections)
+- [x] Dashboard Section: Dawncrest Currency Caps
+  - [x] Implement `src/components/dashboard/CrestTracker.tsx` — MatrixGrid with 5 tier rows, StatusCells showing `qty` label
+  - [x] Wire currency IDs (3383, 3341, 3343, 3345, 3348) to character currency data
+- [x] Dashboard Section: Keystone Display
+  - [x] Implement `src/components/dashboard/KeystoneDisplay.tsx` — compact display of current keystone dungeon + level per character
+  - [x] Hide section entirely if no characters have keystones
+- [x] Dashboard Section: Renown
+  - [x] Implement `src/components/dashboard/RenownSection.tsx` — 4 faction Progress bars (Silvermoon Court, Amani Tribe, Hara'ti, Singularity) showing level/20
+  - [x] Hide section if no renown data exists
+- [x] Dashboard Section: Raid Lockouts
+  - [x] Implement `src/components/dashboard/LockoutGrid.tsx` — MatrixGrid with raid×difficulty rows, StatusCells showing `killed/total`
+  - [x] Wire raid instance IDs (16340, 16531, 16215) and difficulty mapping
+  - [x] Only show rows where at least one character has a lockout; hide entire section if no lockouts
+- [x] Dashboard Section: Daily Activities
+  - [x] Implement `src/components/dashboard/DailySection.tsx` — list of daily activities with descriptions
 - [ ] Upload page
   - [ ] Implement `src/routes/upload.tsx` — auth-guarded route with drag-and-drop zone
   - [ ] Handle file validation (`.lua` extension check), drag states, upload status (idle/uploading/done/error)
