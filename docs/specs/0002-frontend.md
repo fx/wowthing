@@ -1265,14 +1265,14 @@ export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
 - [x] @fx/ui integration and shared utilities
   - [x] Verify @fx/ui component API surface (Card compound components, Tooltip API)
   - [x] Create `src/lib/utils.ts` — `cn()` helper, `ActivityState` type, `STATE_CLASSES` / `CELL_COLORS` maps, `getActivityState()` function
-  - [ ] Create `src/lib/wow/classes.ts` — `CLASS_COLORS` record for all 13 WoW classes
+  - [x] Create `src/lib/wow/classes.ts` — `CLASS_COLORS` record for all 13 WoW classes
   - [x] Create `src/hooks/useMediaQuery.ts` — responsive breakpoint hook
   - [x] Create `src/hooks/useResetTimer.ts` — countdown timer hook with 1s interval
   - [x] Create `src/hooks/useCollapsedColumns.ts` — localStorage-backed collapsed column state
 - [x] Matrix grid system (desktop)
   - [x] Implement `src/components/dashboard/MatrixGrid.tsx` — shared wrapper with sticky first column, horizontal scroll, per-character column collapse toggle
   - [x] Implement `src/components/dashboard/StatusCell.tsx` — dense colored indicator cell with tooltip
-  - [ ] Verify horizontal scroll + sticky column behavior with 10+ character columns
+  - [x] Verify horizontal scroll + sticky column behavior with 10+ character columns
 - [x] Root layout and navigation
   - [x] Implement `src/routes/__root.tsx` — html/head/body shell with `<Nav />` and `<Outlet />`
   - [x] Implement `src/components/layout/Nav.tsx` — sticky nav bar with app name, reset timers (desktop), theme toggle, user dropdown (Sync Now, Upload, Logout)
