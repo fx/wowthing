@@ -25,10 +25,17 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(
       where: eq(users.betterAuthUserId, session.user.id),
     });
 
+    if (!appUser) {
+      throw new Response(null, {
+        status: 302,
+        headers: { Location: '/login' },
+      });
+    }
+
     return next({
       context: {
         session,
-        userId: appUser ? String(appUser.id) : session.user.id,
+        userId: String(appUser.id),
       },
     });
   },

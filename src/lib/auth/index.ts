@@ -4,7 +4,7 @@ import { genericOAuth } from 'better-auth/plugins';
 import { tanstackStartCookies } from 'better-auth/tanstack-start';
 import { eq } from 'drizzle-orm';
 import { db } from '~/db';
-import { account as betterAuthAccount, users } from '~/db/schema';
+import { user as betterAuthUser, users } from '~/db/schema';
 import { encrypt } from '~/lib/auth/encryption';
 import { getBoss } from '~/server/plugins/pg-boss';
 
@@ -14,42 +14,35 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
   databaseHooks: {
-    user: {
+    account: {
       create: {
-        after: async (user) => {
-          // Look up the Better Auth account record to get OAuth tokens
-          const oauthAccount = await db.query.account.findFirst({
-            where: eq(betterAuthAccount.userId, user.id),
+        after: async (accountRecord) => {
+          // Look up the Better Auth user for name/battletag
+          const betterAuthUserRecord = await db.query.user.findFirst({
+            where: eq(betterAuthUser.id, accountRecord.userId),
           });
-
-          if (!oauthAccount) {
-            console.error(
-              `No OAuth account found for Better Auth user ${user.id}`,
-            );
-            return;
-          }
 
           // The Battle.net numeric ID is stored as the Better Auth user.id
           // (since getUserInfo returns id: String(profile.id))
-          const battleNetId = parseInt(user.id, 10);
+          const battleNetId = parseInt(accountRecord.userId, 10);
           if (!Number.isFinite(battleNetId)) {
             console.error(
-              `Could not parse Battle.net ID from user.id: ${user.id}`,
+              `Could not parse Battle.net ID from userId: ${accountRecord.userId}`,
             );
             return;
           }
 
-          const accessToken = oauthAccount.accessToken;
+          const accessToken = accountRecord.accessToken;
           if (!accessToken) {
             console.error(
-              `No access token found for Better Auth user ${user.id}`,
+              `No access token found for account ${accountRecord.id}`,
             );
             return;
           }
 
           const encryptedAccessToken = encrypt(accessToken);
-          const encryptedRefreshToken = oauthAccount.refreshToken
-            ? encrypt(oauthAccount.refreshToken)
+          const encryptedRefreshToken = accountRecord.refreshToken
+            ? encrypt(accountRecord.refreshToken)
             : null;
           const region = process.env.BATTLENET_DEFAULT_REGION || 'us';
 
@@ -57,13 +50,13 @@ export const auth = betterAuth({
           const [appUser] = await db
             .insert(users)
             .values({
-              betterAuthUserId: user.id,
+              betterAuthUserId: accountRecord.userId,
               battleNetId,
-              battleTag: user.name,
+              battleTag: betterAuthUserRecord?.name ?? `User-${battleNetId}`,
               accessToken: encryptedAccessToken,
               refreshToken: encryptedRefreshToken,
               tokenExpiresAt:
-                oauthAccount.accessTokenExpiresAt ?? new Date(),
+                accountRecord.accessTokenExpiresAt ?? new Date(),
               region,
             })
             .onConflictDoUpdate({
@@ -72,7 +65,7 @@ export const auth = betterAuth({
                 accessToken: encryptedAccessToken,
                 refreshToken: encryptedRefreshToken,
                 tokenExpiresAt:
-                  oauthAccount.accessTokenExpiresAt ?? new Date(),
+                  accountRecord.accessTokenExpiresAt ?? new Date(),
                 updatedAt: new Date(),
               },
             })
@@ -85,7 +78,6 @@ export const auth = betterAuth({
               'sync-user-profile',
               {
                 userId: appUser.id,
-                accessToken,
                 region,
               },
               {
