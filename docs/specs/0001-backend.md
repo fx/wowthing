@@ -1143,14 +1143,14 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
 
 ## Tasks
 
-- [ ] Project scaffolding and dev infrastructure
-  - [ ] Initialize TanStack Start project with Bun (`bun create`, app.config.ts, tsconfig, biome.json)
-  - [ ] Add `.npmrc` for `@fx:registry=https://npm.pkg.github.com`
-  - [ ] Install all dependencies (`@fx/ui@0.0.0-28fe5ad`, drizzle-orm, pg-boss, better-auth, postgres, zod, yaml, etc.)
-  - [ ] Create `docker-compose.yml` (app + postgres:17) and `Dockerfile` (oven/bun multi-stage)
-  - [ ] Set up `global.css` with Tailwind v4 + `@fx/ui/styles` import
-  - [ ] Create placeholder root layout (`__root.tsx`) and index route (`index.tsx`)
-  - [ ] Verify `bun dev` boots the app and renders the placeholder page
+- [x] Project scaffolding and dev infrastructure
+  - [x] Initialize TanStack Start project with Bun (`bun create`, app.config.ts, tsconfig, biome.json)
+  - [x] Add `.npmrc` for `@fx:registry=https://npm.pkg.github.com`
+  - [x] Install all dependencies (`@fx/ui@0.0.0-28fe5ad`, drizzle-orm, pg-boss, better-auth, postgres, zod, yaml, etc.)
+  - [x] Create `docker-compose.yml` (app + postgres:17) and `Dockerfile` (oven/bun multi-stage)
+  - [x] Set up `global.css` with Tailwind v4 + `@fx/ui/styles` import
+  - [x] Create placeholder root layout (`__root.tsx`) and index route (`index.tsx`)
+  - [x] Verify `bun dev` boots the app and renders the placeholder page
 - [ ] Database schema and migrations
   - [ ] Write complete Drizzle schema (`src/db/schema.ts`) — all 10 tables with indexes, constraints, JSONB columns
   - [ ] Define Drizzle relations for relational query builder (`usersRelations`, `accountsRelations`, `charactersRelations`, etc.)
