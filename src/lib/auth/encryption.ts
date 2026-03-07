@@ -7,7 +7,13 @@ function getKey(): Buffer {
   if (!hex) {
     throw new Error('Missing ENCRYPTION_KEY environment variable.');
   }
-  return Buffer.from(hex, 'hex');
+  const key = Buffer.from(hex, 'hex');
+  if (key.byteLength !== 32) {
+    throw new Error(
+      'Invalid ENCRYPTION_KEY: expected 32-byte (64 hex chars) key for AES-256-GCM.',
+    );
+  }
+  return key;
 }
 
 export function encrypt(plaintext: string): string {
@@ -24,8 +30,16 @@ export function encrypt(plaintext: string): string {
 
 export function decrypt(ciphertext: string): string {
   const key = getKey();
-  const [ivHex, tagHex, encHex] = ciphertext.split(':');
+  const parts = ciphertext.split(':');
+  if (parts.length !== 3) {
+    throw new Error('Invalid ciphertext format: expected 3 colon-separated parts.');
+  }
+  const [ivHex, tagHex, encHex] = parts;
   const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
-  return decipher.update(Buffer.from(encHex, 'hex')) + decipher.final('utf8');
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(encHex, 'hex')),
+    decipher.final(),
+  ]);
+  return decrypted.toString('utf8');
 }
