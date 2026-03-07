@@ -1172,13 +1172,13 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Register all workers (sync-user-profile, sync-character-profile, sync-character-quests, sync-character-reputations, process-addon-upload)
   - [x] Register cron jobs (schedule-syncs every minute, session-cleanup daily)
   - [x] Wire graceful shutdown via process signal handlers
-- [ ] Authentication (Better Auth + Battle.net)
-  - [ ] Configure Better Auth with Drizzle adapter and Battle.net custom OAuth2 provider (`src/lib/auth/index.ts`)
-  - [ ] Implement AES-256-GCM token encryption/decryption (`src/lib/auth/encryption.ts`)
-  - [ ] Create auth middleware for server functions (`src/lib/auth/middleware.ts`)
-  - [ ] Create Better Auth catch-all API route (`src/routes/api/auth/$.ts`)
+- [x] Authentication (Better Auth + Battle.net)
+  - [x] Configure Better Auth with Drizzle adapter and Battle.net custom OAuth2 provider (`src/lib/auth/index.ts`)
+  - [x] Implement AES-256-GCM token encryption/decryption (`src/lib/auth/encryption.ts`)
+  - [x] Create auth middleware for server functions (`src/lib/auth/middleware.ts`)
+  - [x] Create Better Auth catch-all API route (`src/routes/api/auth/$.ts`)
   - [ ] Add post-login hook to enqueue initial user profile sync job
-  - [ ] Set up environment variables (BATTLENET_CLIENT_ID, BATTLENET_CLIENT_SECRET, BETTER_AUTH_SECRET, ENCRYPTION_KEY)
+  - [x] Set up environment variables (BATTLENET_CLIENT_ID, BATTLENET_CLIENT_SECRET, BETTER_AUTH_SECRET, ENCRYPTION_KEY)
   - [ ] Test full login flow: Battle.net redirect → callback → session cookie → redirect to dashboard
 - [x] Blizzard API client
   - [x] Implement `BlizzardClient` class with Zod-validated `fetch()`, 304 support, and error classes (`src/lib/blizzard/client.ts`)
