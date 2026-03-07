@@ -18,9 +18,9 @@ CREATE TABLE "activity_definitions" (
 	"reset_type" text NOT NULL,
 	"quest_ids" integer[],
 	"threshold" integer,
-	"account_wide" boolean DEFAULT false,
+	"account_wide" boolean DEFAULT false NOT NULL,
 	"sort_order" integer DEFAULT 0 NOT NULL,
-	"enabled" boolean DEFAULT true,
+	"enabled" boolean DEFAULT true NOT NULL,
 	"metadata" jsonb,
 	CONSTRAINT "activity_definitions_key_unique" UNIQUE("key")
 );
@@ -36,9 +36,9 @@ CREATE TABLE "characters" (
 	"faction" text NOT NULL,
 	"level" integer NOT NULL,
 	"item_level" integer,
-	"last_api_sync_at" timestamp,
+	"last_api_sync_at" timestamp with time zone,
 	"last_api_modified" text,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "currencies" (
@@ -49,7 +49,7 @@ CREATE TABLE "currencies" (
 	"max_quantity" integer,
 	"week_quantity" integer,
 	"week_max" integer,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "quest_completions" (
@@ -59,7 +59,7 @@ CREATE TABLE "quest_completions" (
 	"reset_type" text NOT NULL,
 	"reset_week" text,
 	"reset_date" text,
-	"completed_at" timestamp DEFAULT now() NOT NULL
+	"completed_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "renown" (
@@ -69,24 +69,24 @@ CREATE TABLE "renown" (
 	"renown_level" integer DEFAULT 0 NOT NULL,
 	"reputation_current" integer DEFAULT 0 NOT NULL,
 	"reputation_max" integer DEFAULT 2500 NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "sync_state" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"character_id" integer NOT NULL,
 	"sync_type" text NOT NULL,
-	"last_synced_at" timestamp,
+	"last_synced_at" timestamp with time zone,
 	"last_modified_header" text,
-	"next_sync_after" timestamp,
-	"error_count" integer DEFAULT 0
+	"next_sync_after" timestamp with time zone,
+	"error_count" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -95,10 +95,10 @@ CREATE TABLE "users" (
 	"battle_tag" text NOT NULL,
 	"access_token" text NOT NULL,
 	"refresh_token" text,
-	"token_expires_at" timestamp NOT NULL,
+	"token_expires_at" timestamp with time zone NOT NULL,
 	"region" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_battle_net_id_unique" UNIQUE("battle_net_id")
 );
 --> statement-breakpoint
@@ -109,12 +109,12 @@ CREATE TABLE "weekly_activities" (
 	"vault_dungeon_progress" jsonb,
 	"vault_raid_progress" jsonb,
 	"vault_world_progress" jsonb,
-	"vault_has_rewards" boolean DEFAULT false,
+	"vault_has_rewards" boolean DEFAULT false NOT NULL,
 	"keystone_dungeon_id" integer,
 	"keystone_level" integer,
 	"lockouts" jsonb,
-	"synced_at" timestamp,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"synced_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -125,6 +125,7 @@ ALTER TABLE "renown" ADD CONSTRAINT "renown_user_id_users_id_fk" FOREIGN KEY ("u
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sync_state" ADD CONSTRAINT "sync_state_character_id_characters_id_fk" FOREIGN KEY ("character_id") REFERENCES "public"."characters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "weekly_activities" ADD CONSTRAINT "weekly_activities_character_id_characters_id_fk" FOREIGN KEY ("character_id") REFERENCES "public"."characters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "idx_accounts_user" ON "accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_activity_defs_expansion" ON "activity_definitions" USING btree ("expansion_id","category");--> statement-breakpoint
 CREATE INDEX "idx_characters_account" ON "characters" USING btree ("account_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "idx_currencies_char_currency" ON "currencies" USING btree ("character_id","currency_id");--> statement-breakpoint

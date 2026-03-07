@@ -10,6 +10,9 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+import type { VaultSlot, Lockout } from './types';
+
+const tz = { withTimezone: true } as const;
 
 // === Users ===
 export const users = pgTable('users', {
@@ -18,22 +21,26 @@ export const users = pgTable('users', {
   battleTag: text('battle_tag').notNull(),
   accessToken: text('access_token').notNull(), // AES-256-GCM encrypted
   refreshToken: text('refresh_token'), // AES-256-GCM encrypted
-  tokenExpiresAt: timestamp('token_expires_at').notNull(),
+  tokenExpiresAt: timestamp('token_expires_at', tz).notNull(),
   region: text('region').notNull(), // 'us' | 'eu' | 'kr' | 'tw'
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at', tz).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
 });
 
 // === Accounts ===
-export const accounts = pgTable('accounts', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  battleNetAccountId: integer('battle_net_account_id').notNull(),
-  region: text('region').notNull(),
-  displayName: text('display_name'),
-});
+export const accounts = pgTable(
+  'accounts',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    battleNetAccountId: integer('battle_net_account_id').notNull(),
+    region: text('region').notNull(),
+    displayName: text('display_name'),
+  },
+  (t) => [index('idx_accounts_user').on(t.userId)],
+);
 
 // === Characters ===
 export const characters = pgTable(
@@ -51,9 +58,9 @@ export const characters = pgTable(
     faction: text('faction').notNull(), // 'alliance' | 'horde'
     level: integer('level').notNull(),
     itemLevel: integer('item_level'),
-    lastApiSyncAt: timestamp('last_api_sync_at'),
+    lastApiSyncAt: timestamp('last_api_sync_at', tz),
     lastApiModified: text('last_api_modified'),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
   },
   (t) => [index('idx_characters_account').on(t.accountId)],
 );
@@ -67,15 +74,15 @@ export const weeklyActivities = pgTable(
       .notNull()
       .references(() => characters.id, { onDelete: 'cascade' }),
     resetWeek: text('reset_week').notNull(), // "2026-W10"
-    vaultDungeonProgress: jsonb('vault_dungeon_progress'), // VaultSlot[]
-    vaultRaidProgress: jsonb('vault_raid_progress'), // VaultSlot[]
-    vaultWorldProgress: jsonb('vault_world_progress'), // VaultSlot[]
-    vaultHasRewards: boolean('vault_has_rewards').default(false),
+    vaultDungeonProgress: jsonb('vault_dungeon_progress').$type<VaultSlot[]>(),
+    vaultRaidProgress: jsonb('vault_raid_progress').$type<VaultSlot[]>(),
+    vaultWorldProgress: jsonb('vault_world_progress').$type<VaultSlot[]>(),
+    vaultHasRewards: boolean('vault_has_rewards').notNull().default(false),
     keystoneDungeonId: integer('keystone_dungeon_id'),
     keystoneLevel: integer('keystone_level'),
-    lockouts: jsonb('lockouts'), // Lockout[]
-    syncedAt: timestamp('synced_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    lockouts: jsonb('lockouts').$type<Lockout[]>(),
+    syncedAt: timestamp('synced_at', tz),
+    createdAt: timestamp('created_at', tz).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('idx_weekly_char_week').on(t.characterId, t.resetWeek),
@@ -94,7 +101,7 @@ export const questCompletions = pgTable(
     resetType: text('reset_type').notNull(), // 'daily' | 'weekly'
     resetWeek: text('reset_week'),
     resetDate: text('reset_date'), // YYYY-MM-DD
-    completedAt: timestamp('completed_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at', tz).defaultNow().notNull(),
   },
   (t) => [
     index('idx_quests_char_quest_week').on(
@@ -123,7 +130,7 @@ export const currencies = pgTable(
     maxQuantity: integer('max_quantity'),
     weekQuantity: integer('week_quantity'),
     weekMax: integer('week_max'),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('idx_currencies_char_currency').on(
@@ -145,7 +152,7 @@ export const renown = pgTable(
     renownLevel: integer('renown_level').notNull().default(0),
     reputationCurrent: integer('reputation_current').notNull().default(0),
     reputationMax: integer('reputation_max').notNull().default(2500),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
   },
   (t) => [
     uniqueIndex('idx_renown_user_faction').on(t.userId, t.factionId),
@@ -167,9 +174,9 @@ export const activityDefinitions = pgTable(
     resetType: text('reset_type').notNull(), // 'daily' | 'weekly' | 'biweekly'
     questIds: integer('quest_ids').array(),
     threshold: integer('threshold'),
-    accountWide: boolean('account_wide').default(false),
+    accountWide: boolean('account_wide').notNull().default(false),
     sortOrder: integer('sort_order').notNull().default(0),
-    enabled: boolean('enabled').default(true),
+    enabled: boolean('enabled').notNull().default(true),
     metadata: jsonb('metadata'),
   },
   (t) => [
@@ -185,8 +192,8 @@ export const sessions = pgTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', tz).notNull(),
+    createdAt: timestamp('created_at', tz).defaultNow().notNull(),
   },
   (t) => [
     index('idx_sessions_user').on(t.userId),
@@ -203,10 +210,10 @@ export const syncState = pgTable(
       .notNull()
       .references(() => characters.id, { onDelete: 'cascade' }),
     syncType: text('sync_type').notNull(),
-    lastSyncedAt: timestamp('last_synced_at'),
+    lastSyncedAt: timestamp('last_synced_at', tz),
     lastModifiedHeader: text('last_modified_header'),
-    nextSyncAfter: timestamp('next_sync_after'),
-    errorCount: integer('error_count').default(0),
+    nextSyncAfter: timestamp('next_sync_after', tz),
+    errorCount: integer('error_count').notNull().default(0),
   },
   (t) => [
     uniqueIndex('idx_sync_char_type').on(t.characterId, t.syncType),
