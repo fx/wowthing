@@ -1162,16 +1162,16 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Write `src/lib/wow/classes.ts` (CLASS_COLORS for all 13 classes)
   - [x] Write `src/lib/wow/constants.ts` (CHARACTER_MAX_LEVEL, CURRENT_EXPANSION, MYTHIC_PLUS_SEASON)
   - [x] Implement `src/lib/activities/resets.ts` (getNextWeeklyReset, getNextDailyReset, getCurrentResetWeek, getTodayDate) per region config
-- [ ] Activity seed system
-  - [ ] Write `seeds/activities.yaml` with all Midnight S1 activities (quest IDs, currency IDs, instance IDs from poc.md section 12)
-  - [ ] Implement `src/db/seed.ts` — YAML parser, idempotent upsert on `activity_definitions.key`
+- [x] Activity seed system
+  - [x] Write `seeds/activities.yaml` with all Midnight S1 activities (quest IDs, currency IDs, instance IDs from poc.md section 12)
+  - [x] Implement `src/db/seed.ts` — YAML parser, idempotent upsert on `activity_definitions.key`
   - [ ] Verify `bun db:seed` populates the activity_definitions table correctly
-- [ ] pg-boss Nitro plugin
-  - [ ] Create `src/server/plugins/pg-boss.ts` skeleton — boss lifecycle (start/stop), `getBoss()` export
-  - [ ] Define `JobRegistry` type for all job names and payload shapes
-  - [ ] Register all workers (sync-user-profile, sync-character-profile, sync-character-quests, sync-character-reputations, process-addon-upload)
-  - [ ] Register cron jobs (schedule-syncs every minute, session-cleanup daily)
-  - [ ] Wire graceful shutdown via `nitro.hooks.hook('close', ...)`
+- [x] pg-boss plugin
+  - [x] Create `src/server/plugins/pg-boss.ts` skeleton — boss lifecycle (start/stop), `getBoss()` export
+  - [x] Define `JobRegistry` type for all job names and payload shapes
+  - [x] Register all workers (sync-user-profile, sync-character-profile, sync-character-quests, sync-character-reputations, process-addon-upload)
+  - [x] Register cron jobs (schedule-syncs every minute, session-cleanup daily)
+  - [x] Wire graceful shutdown via process signal handlers
 - [ ] Authentication (Better Auth + Battle.net)
   - [ ] Configure Better Auth with Drizzle adapter and Battle.net custom OAuth2 provider (`src/lib/auth/index.ts`)
   - [ ] Implement AES-256-GCM token encryption/decryption (`src/lib/auth/encryption.ts`)
@@ -1180,9 +1180,9 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [ ] Add post-login hook to enqueue initial user profile sync job
   - [ ] Set up environment variables (BATTLENET_CLIENT_ID, BATTLENET_CLIENT_SECRET, BETTER_AUTH_SECRET, ENCRYPTION_KEY)
   - [ ] Test full login flow: Battle.net redirect → callback → session cookie → redirect to dashboard
-- [ ] Blizzard API client
-  - [ ] Implement `BlizzardClient` class with Zod-validated `fetch()`, 304 support, and error classes (`src/lib/blizzard/client.ts`)
-  - [ ] Write Zod schemas for all API responses (`src/lib/blizzard/schemas.ts` — userProfile, characterProfile, completedQuests, reputations)
+- [x] Blizzard API client
+  - [x] Implement `BlizzardClient` class with Zod-validated `fetch()`, 304 support, and error classes (`src/lib/blizzard/client.ts`)
+  - [x] Write Zod schemas for all API responses (`src/lib/blizzard/schemas.ts` — userProfile, characterProfile, completedQuests, reputations)
 - [ ] Blizzard API sync workers
   - [ ] Implement `syncUserProfile` — fetch `/profile/user/wow`, upsert accounts + characters, initialize sync_state rows (`src/lib/blizzard/sync-profile.ts`)
   - [ ] Implement `syncCharacterProfile` — fetch character endpoint, upsert level/ilvl/class, update sync_state (`src/lib/blizzard/sync.ts`)
