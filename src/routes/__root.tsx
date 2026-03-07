@@ -5,6 +5,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from '@tanstack/react-router';
+import globalCssUrl from '~/global.css?url';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -15,7 +16,7 @@ export const Route = createRootRoute({
       { title: 'WoWThing' },
     ],
     links: [
-      { rel: 'stylesheet', href: '/src/global.css' },
+      { rel: 'stylesheet', href: globalCssUrl },
     ],
   }),
 });
