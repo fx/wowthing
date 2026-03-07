@@ -37,35 +37,35 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/upload': typeof UploadRoute
   '/login': typeof LoginRoute
+  '/upload': typeof UploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/upload': typeof UploadRoute
   '/login': typeof LoginRoute
+  '/upload': typeof UploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/upload': typeof UploadRoute
   '/login': typeof LoginRoute
+  '/upload': typeof UploadRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/upload' | '/login' | '/api/auth/$'
+  fullPaths: '/' | '/login' | '/upload' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/upload' | '/login' | '/api/auth/$'
-  id: '__root__' | '/' | '/upload' | '/login' | '/api/auth/$'
+  to: '/' | '/login' | '/upload' | '/api/auth/$'
+  id: '__root__' | '/' | '/login' | '/upload' | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  UploadRoute: typeof UploadRoute
   LoginRoute: typeof LoginRoute
+  UploadRoute: typeof UploadRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -104,8 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  UploadRoute: UploadRoute,
   LoginRoute: LoginRoute,
+  UploadRoute: UploadRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

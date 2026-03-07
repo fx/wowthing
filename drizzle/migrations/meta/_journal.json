@@ -8,6 +8,13 @@
       "when": 1772852632552,
       "tag": "0000_young_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772922573603,
+      "tag": "0001_modern_sentinels",
+      "breakpoints": true
     }
   ]
 }
