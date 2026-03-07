@@ -1,5 +1,5 @@
 import type PgBoss from 'pg-boss';
-import { lt, asc, sql } from 'drizzle-orm';
+import { lt, asc, eq } from 'drizzle-orm';
 import { db } from '~/db';
 import { syncState, characters, accounts } from '~/db/schema';
 
@@ -11,8 +11,8 @@ export async function scheduleCharacterSyncs(boss: PgBoss) {
       region: accounts.region,
     })
     .from(syncState)
-    .innerJoin(characters, sql`${syncState.characterId} = ${characters.id}`)
-    .innerJoin(accounts, sql`${characters.accountId} = ${accounts.id}`)
+    .innerJoin(characters, eq(syncState.characterId, characters.id))
+    .innerJoin(accounts, eq(characters.accountId, accounts.id))
     .where(lt(syncState.nextSyncAfter, new Date()))
     .orderBy(asc(syncState.lastSyncedAt))
     .limit(20);

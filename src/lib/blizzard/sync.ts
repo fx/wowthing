@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '~/db';
 import {
   characters,
@@ -191,15 +191,10 @@ export async function syncCharacterProfile(
     );
 
     if (notModified) {
-      await db
-        .update(syncState)
-        .set({ lastSyncedAt: new Date() })
-        .where(
-          and(
-            eq(syncState.characterId, characterId),
-            eq(syncState.syncType, 'profile'),
-          ),
-        );
+      await updateSyncState(characterId, 'profile', {
+        lastModifiedHeader: state?.lastModifiedHeader,
+        nextSyncAfter: new Date(Date.now() + 2 * 3600_000), // 2 hours
+      });
       return;
     }
 
@@ -251,44 +246,42 @@ export async function syncCharacterQuests(
     );
 
     if (notModified) {
-      await db
-        .update(syncState)
-        .set({ lastSyncedAt: new Date() })
-        .where(
-          and(
-            eq(syncState.characterId, characterId),
-            eq(syncState.syncType, 'quests'),
-          ),
-        );
+      await updateSyncState(characterId, 'quests', {
+        lastModifiedHeader: state?.lastModifiedHeader,
+        nextSyncAfter: new Date(Date.now() + 3600_000), // 1 hour
+      });
       return;
     }
 
     if (data) {
       const resetWeek = getCurrentResetWeek(region as Region);
 
-      // Insert quest completions for current reset week (idempotent)
-      // No unique index on questCompletions, so check existence first
-      for (const quest of data.quests) {
-        const exists = await db
-          .select({ id: questCompletions.id })
-          .from(questCompletions)
-          .where(
-            and(
-              eq(questCompletions.characterId, characterId),
-              eq(questCompletions.questId, quest.id),
-              eq(questCompletions.resetWeek, resetWeek),
-            ),
-          )
-          .limit(1);
+      // Batch check existing quest completions to avoid N+1 queries
+      const questIds = data.quests.map((q) => q.id);
+      const existingQuests = questIds.length > 0
+        ? await db
+            .select({ questId: questCompletions.questId })
+            .from(questCompletions)
+            .where(
+              and(
+                eq(questCompletions.characterId, characterId),
+                eq(questCompletions.resetWeek, resetWeek),
+                inArray(questCompletions.questId, questIds),
+              ),
+            )
+        : [];
+      const existingQuestIds = new Set(existingQuests.map((r) => r.questId));
 
-        if (exists.length === 0) {
-          await db.insert(questCompletions).values({
+      const newQuests = data.quests.filter((q) => !existingQuestIds.has(q.id));
+      if (newQuests.length > 0) {
+        await db.insert(questCompletions).values(
+          newQuests.map((q) => ({
             characterId,
-            questId: quest.id,
-            resetType: 'weekly',
+            questId: q.id,
+            resetType: 'weekly' as const,
             resetWeek,
-          });
-        }
+          })),
+        );
       }
 
       await updateSyncState(characterId, 'quests', {
@@ -324,15 +317,10 @@ export async function syncCharacterReputations(
     );
 
     if (notModified) {
-      await db
-        .update(syncState)
-        .set({ lastSyncedAt: new Date() })
-        .where(
-          and(
-            eq(syncState.characterId, characterId),
-            eq(syncState.syncType, 'reputations'),
-          ),
-        );
+      await updateSyncState(characterId, 'reputations', {
+        lastModifiedHeader: state?.lastModifiedHeader,
+        nextSyncAfter: new Date(Date.now() + 4 * 3600_000), // 4 hours
+      });
       return;
     }
 
