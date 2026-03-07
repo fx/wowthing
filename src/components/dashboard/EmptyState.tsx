@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
-import { TypedButton } from '~/components/shared/TypedButton';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
 
 export function EmptyState() {
   return (
@@ -14,19 +13,19 @@ export function EmptyState() {
             characters here.
           </p>
           <div className="flex gap-2">
-            <TypedButton
+            <Button
               variant="default"
               className="w-full flex-1"
               onClick={() => { window.location.href = '/upload'; }}
             >
               Upload Addon Data
-            </TypedButton>
-            <TypedButton
+            </Button>
+            <Button
               variant="outline"
               onClick={() => window.location.reload()}
             >
               Refresh
-            </TypedButton>
+            </Button>
           </div>
         </CardContent>
       </Card>

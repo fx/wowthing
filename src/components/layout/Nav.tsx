@@ -1,4 +1,5 @@
 import {
+  Button,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -7,7 +8,6 @@ import {
 } from '@fx/ui';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { ResetTimers } from './ResetTimers';
-import { TypedButton } from '~/components/shared/TypedButton';
 import { useMediaQuery } from '~/hooks/useMediaQuery';
 import { authClient } from '~/lib/auth/client';
 import { getNextDailyReset, getNextWeeklyReset } from '~/lib/activities/resets';
@@ -50,9 +50,9 @@ export function Nav() {
           {!isPending && session && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <TypedButton variant="ghost" size="sm">
+                <Button variant="ghost" size="sm">
                   {session.user.name ?? 'Account'}
-                </TypedButton>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleSync}>

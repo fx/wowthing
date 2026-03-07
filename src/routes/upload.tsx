@@ -1,7 +1,6 @@
 import { createFileRoute, redirect, Link, useRouter } from '@tanstack/react-router';
 import { useState, useCallback, useRef } from 'react';
-import { Card, CardContent } from '@fx/ui';
-import { TypedButton } from '~/components/shared/TypedButton';
+import { Button, Card, CardContent } from '@fx/ui';
 import { authClient } from '~/lib/auth/client';
 import { uploadAddonData } from '~/server/functions/upload';
 import { cn } from '~/lib/utils';
@@ -135,14 +134,14 @@ function UploadPage() {
 
       <div className="flex gap-2">
         {status === 'done' && (
-          <TypedButton onClick={() => router.navigate({ to: '/' })}>
+          <Button onClick={() => router.navigate({ to: '/' })}>
             Back to Dashboard
-          </TypedButton>
+          </Button>
         )}
         {(status === 'done' || status === 'error') && (
-          <TypedButton variant="outline" onClick={() => setStatus('idle')}>
+          <Button variant="outline" onClick={() => setStatus('idle')}>
             Upload Another
-          </TypedButton>
+          </Button>
         )}
       </div>
     </div>

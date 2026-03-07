@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Card, CardContent } from '@fx/ui';
-import { TypedButton } from '~/components/shared/TypedButton';
+import { Button, Card, CardContent } from '@fx/ui';
 import { authClient } from '~/lib/auth/client';
 
 export const Route = createFileRoute('/login')({
@@ -23,9 +22,9 @@ function LoginPage() {
           <p className="text-muted-foreground">
             Track your Midnight weekly and daily activities
           </p>
-          <TypedButton size="lg" className="w-full" onClick={handleLogin}>
+          <Button size="lg" className="w-full" onClick={handleLogin}>
             Login with Battle.net
-          </TypedButton>
+          </Button>
         </CardContent>
       </Card>
     </div>
