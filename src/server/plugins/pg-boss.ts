@@ -1,7 +1,7 @@
 import PgBoss from 'pg-boss';
 
 export type JobRegistry = {
-  'sync-user-profile': { userId: string; accessToken: string; region: string };
+  'sync-user-profile': { userId: number; accessToken: string; region: string };
   'sync-character-profile': { characterId: number; region: string };
   'sync-character-quests': { characterId: number; region: string };
   'sync-character-reputations': { characterId: number; region: string };
@@ -20,8 +20,13 @@ export function getBoss(): PgBoss {
 export async function startBoss(): Promise<PgBoss> {
   if (bossInstance) return bossInstance;
 
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is required to initialize pg-boss');
+  }
+
   const boss = new PgBoss({
-    connectionString: process.env.DATABASE_URL!,
+    connectionString,
     schema: 'pgboss',
   });
 
@@ -91,8 +96,8 @@ export async function startBoss(): Promise<PgBoss> {
     }
   };
 
-  process.on('SIGTERM', shutdown);
-  process.on('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
 
   return boss;
 }

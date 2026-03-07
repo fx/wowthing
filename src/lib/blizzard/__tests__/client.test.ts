@@ -83,12 +83,6 @@ describe('BlizzardClient', () => {
     await expect(client.fetch('/test', testSchema)).rejects.toThrow(
       BlizzardApiError,
     );
-
-    try {
-      await client.fetch('/test', testSchema);
-    } catch (err) {
-      // won't reach here because fetch is already consumed, but validates the type
-    }
   });
 
   it('throws on Zod validation failure', async () => {

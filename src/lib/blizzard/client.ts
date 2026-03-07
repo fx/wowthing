@@ -1,13 +1,12 @@
 import type { z } from 'zod';
+import type { Region } from '~/lib/activities/resets';
 
-const API_HOSTS = {
+const API_HOSTS: Record<Region, string> = {
   us: 'https://us.api.blizzard.com',
   eu: 'https://eu.api.blizzard.com',
   kr: 'https://kr.api.blizzard.com',
   tw: 'https://tw.api.blizzard.com',
-} as const;
-
-type Region = keyof typeof API_HOSTS;
+};
 
 export class BlizzardClient {
   constructor(

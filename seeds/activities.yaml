@@ -142,23 +142,26 @@ activities:
   # === RAID LOCKOUTS ===
   - key: lockout_voidspire
     name: Voidspire
+    short_name: Voidspire
     category: weekly
     reset_type: weekly
     metadata: { source: lockout_api, instance_id: 16340, boss_count: 6, difficulties: [normal, heroic, mythic] }
 
   - key: lockout_dreamrift
     name: Dreamrift
+    short_name: Dreamrift
     category: weekly
     reset_type: weekly
     metadata: { source: lockout_api, instance_id: 16531, boss_count: 1, difficulties: [normal, heroic, mythic] }
 
   - key: lockout_quel_danas
     name: "March on Quel'Danes"
+    short_name: "Quel'Danes"
     category: weekly
     reset_type: weekly
     metadata: { source: lockout_api, instance_id: 16215, boss_count: 2, difficulties: [normal, heroic, mythic] }
 
-# === RENOWN FACTIONS ===
+# === RENOWN FACTIONS (reference data, not seeded by src/db/seed.ts) ===
 renown:
   - name: Silvermoon Court
     zone: Eversong Woods
