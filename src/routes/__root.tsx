@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
 } from '@tanstack/react-router';
 import globalCssUrl from '~/global.css?url';
+import { Nav } from '~/components/layout/Nav';
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -27,8 +28,11 @@ function RootLayout() {
       <head>
         <HeadContent />
       </head>
-      <body>
-        <Outlet />
+      <body className="bg-background text-foreground min-h-screen antialiased">
+        <Nav />
+        <main className="container mx-auto px-4 py-6 max-w-7xl">
+          <Outlet />
+        </main>
         <ScrollRestoration />
         <Scripts />
       </body>
