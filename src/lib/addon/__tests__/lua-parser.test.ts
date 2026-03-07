@@ -136,4 +136,45 @@ describe('luaToJson', () => {
     const parsed = JSON.parse(result);
     expect(parsed.value).toBeNull();
   });
+
+  it('handles empty tables', () => {
+    const lua = `WWTCSaved = {
+\t["empty"] = {
+\t},
+}`;
+    const result = luaToJson(lua);
+    const parsed = JSON.parse(result);
+    expect(parsed.empty).toEqual({});
+  });
+
+  it('strips comments without ", -- " prefix', () => {
+    const lua = `WWTCSaved = {
+\t["level"] = 90,-- no space before comment
+\t["name"] = "Test", --compact comment
+}`;
+    const result = luaToJson(lua);
+    const parsed = JSON.parse(result);
+    expect(parsed.level).toBe(90);
+    expect(parsed.name).toBe('Test');
+  });
+
+  it('handles space-indented lines', () => {
+    const lua = `WWTCSaved = {
+    ["level"] = 90,
+    ["name"] = "Test",
+}`;
+    const result = luaToJson(lua);
+    const parsed = JSON.parse(result);
+    expect(parsed.level).toBe(90);
+    expect(parsed.name).toBe('Test');
+  });
+
+  it('does not strip -- inside quoted strings', () => {
+    const lua = `WWTCSaved = {
+\t["tag"] = "hello--world",
+}`;
+    const result = luaToJson(lua);
+    const parsed = JSON.parse(result);
+    expect(parsed.tag).toBe('hello--world');
+  });
 });

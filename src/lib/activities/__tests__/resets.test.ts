@@ -1,10 +1,14 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   getNextWeeklyReset,
   getNextDailyReset,
   getCurrentResetWeek,
   getTodayDate,
 } from '../resets';
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
 
 afterEach(() => {
   vi.useRealTimers();

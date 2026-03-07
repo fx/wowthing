@@ -18,13 +18,59 @@ export function luaToJson(luaText: string): string {
   const state = { index: 0, lines };
   converter.recurse(state, '');
 
-  // The converter produces trailing commas after values and closers.
-  // Remove them to produce valid JSON.
-  let result = converter.toString();
-  // Remove trailing comma before ] or }
-  result = result.replace(/,([}\]])/g, '$1');
-  // Remove final trailing comma
-  result = result.replace(/,$/, '');
+  // Remove trailing commas in a string-aware way to produce valid JSON.
+  return removeTrailingCommas(converter.toString());
+}
+
+/**
+ * Remove trailing commas from a JSON-like string without touching commas
+ * inside string values. A comma is "trailing" if the next non-whitespace
+ * character is ']', '}', or end-of-input.
+ */
+function removeTrailingCommas(jsonLike: string): string {
+  let result = '';
+  const len = jsonLike.length;
+  let inString = false;
+  let escape = false;
+
+  for (let i = 0; i < len; i++) {
+    const ch = jsonLike[i];
+
+    if (inString) {
+      result += ch;
+      if (escape) {
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      continue;
+    }
+
+    if (ch === ',') {
+      // Look ahead for the next non-whitespace character.
+      let j = i + 1;
+      while (j < len && /\s/.test(jsonLike[j])) {
+        j++;
+      }
+      const next = j < len ? jsonLike[j] : '';
+      // Skip trailing comma before ']', '}', or end-of-input
+      if (!next || next === ']' || next === '}') {
+        continue;
+      }
+      result += ch;
+      continue;
+    }
+
+    result += ch;
+  }
 
   return result;
 }
@@ -37,8 +83,7 @@ interface LineState {
 class LuaToJsonConverter {
   private parts: string[] = [];
 
-  constructor(luaSize: number) {
-    // Pre-allocate hint (not strictly needed in JS but mirrors C# intent)
+  constructor(_luaSize: number) {
     this.parts = [];
   }
 
@@ -55,18 +100,22 @@ class LuaToJsonConverter {
       const rawLine = state.lines[state.index];
       state.index++;
 
-      // Strip leading tabs/whitespace
-      const startIndex = rawLine.search(/[^\t]/);
+      // Strip leading whitespace (tabs and spaces)
+      const startIndex = rawLine.search(/[^\s]/);
       if (startIndex === -1) {
         continue;
       }
 
       let endIndex = rawLine.length;
 
-      // Strip ", -- " comment suffixes
-      const commentIndex = rawLine.lastIndexOf(', -- ');
-      if (commentIndex > 0) {
+      // Strip Lua comment suffixes: find "--" outside of quoted strings
+      const commentIndex = findLuaComment(rawLine, startIndex);
+      if (commentIndex > startIndex) {
         endIndex = commentIndex;
+        // Also strip trailing whitespace and comma before comment
+        while (endIndex > startIndex && /[\s,]/.test(rawLine[endIndex - 1])) {
+          endIndex--;
+        }
       }
 
       // Strip trailing comma
@@ -87,6 +136,14 @@ class LuaToJsonConverter {
 
       if (line[0] === '}') {
         if (this.parts.length > initialLength) {
+          this.writeCloser(type);
+        } else {
+          // Empty table: emit a valid JSON structure
+          if (!wroteOpener) {
+            this.writeKey(outerKey);
+            type = StructureType.Dictionary;
+            wroteOpener = this.writeOpener(wroteOpener, type);
+          }
           this.writeCloser(type);
         }
         break;
@@ -209,4 +266,31 @@ class LuaToJsonConverter {
       this.parts.push(':');
     }
   }
+}
+
+/**
+ * Find the index of a Lua line comment ("--") that is not inside a quoted string.
+ * Returns -1 if no comment is found.
+ */
+function findLuaComment(line: string, start: number): number {
+  let inString = false;
+  let stringQuote = '';
+  for (let i = start; i < line.length - 1; i++) {
+    const ch = line[i];
+    if (inString) {
+      if (ch === stringQuote) {
+        inString = false;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      inString = true;
+      stringQuote = ch;
+      continue;
+    }
+    if (ch === '-' && line[i + 1] === '-') {
+      return i;
+    }
+  }
+  return -1;
 }
