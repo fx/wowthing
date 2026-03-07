@@ -22,12 +22,11 @@ export const auth = betterAuth({
             where: eq(betterAuthUser.id, accountRecord.userId),
           });
 
-          // The Battle.net numeric ID is stored as the Better Auth user.id
-          // (since getUserInfo returns id: String(profile.id))
-          const battleNetId = parseInt(accountRecord.userId, 10);
+          // accountId holds the provider's user ID from getUserInfo (Battle.net numeric ID)
+          const battleNetId = parseInt(accountRecord.accountId, 10);
           if (!Number.isFinite(battleNetId)) {
             console.error(
-              `Could not parse Battle.net ID from userId: ${accountRecord.userId}`,
+              `Could not parse Battle.net ID from accountId: ${accountRecord.accountId}`,
             );
             return;
           }

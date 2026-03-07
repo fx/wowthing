@@ -1,6 +1,10 @@
+import { eq } from 'drizzle-orm';
 import PgBoss from 'pg-boss';
+import { db } from '~/db';
+import { users } from '~/db/schema';
 import { processAddonUpload } from '~/lib/addon/processor';
 import type { AddonUpload } from '~/lib/addon/schema';
+import { decrypt } from '~/lib/auth/encryption';
 import { syncUserProfile } from '~/lib/blizzard/sync-profile';
 import {
   syncCharacterProfile,
@@ -10,7 +14,7 @@ import {
 import { scheduleCharacterSyncs } from '~/lib/blizzard/scheduler';
 
 export type JobRegistry = {
-  'sync-user-profile': { userId: number; accessToken: string; region: string };
+  'sync-user-profile': { userId: number; region: string };
   'sync-character-profile': { characterId: number; region: string };
   'sync-character-quests': { characterId: number; region: string };
   'sync-character-reputations': { characterId: number; region: string };
@@ -49,11 +53,12 @@ export async function startBoss(): Promise<PgBoss> {
     { batchSize: 2 },
     async (jobs) => {
       for (const job of jobs) {
-        await syncUserProfile(
-          job.data.userId,
-          job.data.accessToken,
-          job.data.region,
-        );
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, job.data.userId),
+        });
+        if (!user) continue;
+        const accessToken = decrypt(user.accessToken);
+        await syncUserProfile(job.data.userId, accessToken, job.data.region);
       }
     },
   );
