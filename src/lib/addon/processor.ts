@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '~/db';
 import {
   accounts,
@@ -103,33 +103,59 @@ async function processCharacterQuests(
   resetWeek: string,
   todayDate: string,
 ): Promise<void> {
-  // Daily quests
-  if (charData.dailyQuests) {
-    for (const questId of charData.dailyQuests) {
-      await db
-        .insert(questCompletions)
-        .values({
-          characterId,
-          questId,
-          resetType: 'daily',
-          resetDate: todayDate,
-        })
-        .onConflictDoNothing();
+  // Daily quests — check existing to avoid duplicates (no unique constraint)
+  if (charData.dailyQuests && charData.dailyQuests.length > 0) {
+    const existingDaily = await db
+      .select({ questId: questCompletions.questId })
+      .from(questCompletions)
+      .where(
+        and(
+          eq(questCompletions.characterId, characterId),
+          eq(questCompletions.resetDate, todayDate),
+          eq(questCompletions.resetType, 'daily'),
+        ),
+      );
+    const existingDailyIds = new Set(existingDaily.map((r) => r.questId));
+
+    const newDaily = charData.dailyQuests
+      .filter((qid) => !existingDailyIds.has(qid))
+      .map((questId) => ({
+        characterId,
+        questId,
+        resetType: 'daily' as const,
+        resetDate: todayDate,
+      }));
+
+    if (newDaily.length > 0) {
+      await db.insert(questCompletions).values(newDaily);
     }
   }
 
-  // Weekly quests (from otherQuests)
-  if (charData.otherQuests) {
-    for (const questId of charData.otherQuests) {
-      await db
-        .insert(questCompletions)
-        .values({
-          characterId,
-          questId,
-          resetType: 'weekly',
-          resetWeek,
-        })
-        .onConflictDoNothing();
+  // Weekly quests — check existing to avoid duplicates (no unique constraint)
+  if (charData.otherQuests && charData.otherQuests.length > 0) {
+    const existingWeekly = await db
+      .select({ questId: questCompletions.questId })
+      .from(questCompletions)
+      .where(
+        and(
+          eq(questCompletions.characterId, characterId),
+          eq(questCompletions.resetWeek, resetWeek),
+          eq(questCompletions.resetType, 'weekly'),
+        ),
+      );
+    const existingWeeklyIds = new Set(existingWeekly.map((r) => r.questId));
+
+    const newWeekly = charData.otherQuests
+      .filter((qid) => !existingWeeklyIds.has(qid))
+      .map((questId) => ({
+        characterId,
+        questId,
+        resetType: 'weekly' as const,
+        resetWeek,
+      }));
+
+    if (newWeekly.length > 0) {
+      await db.insert(questCompletions).values(newWeekly);
     }
   }
 }

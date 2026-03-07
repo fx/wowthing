@@ -9,10 +9,13 @@ import { getBoss } from '~/server/plugins/pg-boss';
 export const triggerSync = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const userId = context.userId;
+    const numericUserId = parseInt(context.userId);
+    if (!Number.isFinite(numericUserId)) {
+      throw new Error('Invalid user id');
+    }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, parseInt(userId)),
+      where: eq(users.id, numericUserId),
     });
 
     if (!user) {
@@ -25,12 +28,12 @@ export const triggerSync = createServerFn({ method: 'POST' })
     await boss.send(
       'sync-user-profile',
       {
-        userId,
+        userId: numericUserId,
         accessToken,
         region: user.region,
       },
       {
-        singletonKey: `user-profile-${userId}`,
+        singletonKey: `user-profile-${numericUserId}`,
         expireInMinutes: 5,
       },
     );

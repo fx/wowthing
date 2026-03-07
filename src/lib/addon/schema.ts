@@ -1,46 +1,78 @@
 import { z } from 'zod';
 
 // Currency format: "quantity:max:isWeekly:weekQty:weekMax:isMovingMax:totalQty"
-const currencyStringSchema = z.string().transform((s) => {
-  const [qty, max, isWeekly, weekQty, weekMax, isMovingMax, totalQty] =
-    s.split(':');
-  return {
-    quantity: parseInt(qty) || 0,
-    max: parseInt(max) || 0,
-    isWeekly: isWeekly === '1',
-    weekQuantity: parseInt(weekQty) || 0,
-    weekMax: parseInt(weekMax) || 0,
-    isMovingMax: isMovingMax === '1',
-    totalQuantity: parseInt(totalQty) || 0,
-  };
-});
+const currencyStringSchema = z
+  .string()
+  .refine(
+    (s) => {
+      const parts = s.split(':');
+      if (parts.length !== 7) return false;
+      const [qty, max, isWeekly, weekQty, weekMax, isMovingMax, totalQty] =
+        parts;
+      const intFields = [qty, max, weekQty, weekMax, totalQty];
+      if (!intFields.every((v) => v !== '' && Number.isFinite(Number(v))))
+        return false;
+      if (!['0', '1'].includes(isWeekly)) return false;
+      if (!['0', '1'].includes(isMovingMax)) return false;
+      return true;
+    },
+    { message: 'Invalid currency string format' },
+  )
+  .transform((s) => {
+    const [qty, max, isWeekly, weekQty, weekMax, isMovingMax, totalQty] =
+      s.split(':');
+    return {
+      quantity: parseInt(qty, 10),
+      max: parseInt(max, 10),
+      isWeekly: isWeekly === '1',
+      weekQuantity: parseInt(weekQty, 10),
+      weekMax: parseInt(weekMax, 10),
+      isMovingMax: isMovingMax === '1',
+      totalQuantity: parseInt(totalQty, 10),
+    };
+  });
 
 // Progress quest: "key|questId|name|status|expires|obj1Type~obj1Text~have~need^obj2..."
-const progressQuestSchema = z.string().transform((s) => {
-  const [key, questId, name, status, expires, ...objParts] = s.split('|');
-  const objectives = objParts.join('|')
-    ? objParts
-        .join('|')
-        .split('^')
-        .map((obj) => {
-          const [type, text, have, need] = obj.split('~');
-          return {
-            type,
-            text,
-            have: parseInt(have) || 0,
-            need: parseInt(need) || 0,
-          };
-        })
-    : [];
-  return {
-    key,
-    questId: parseInt(questId),
-    name,
-    status: parseInt(status),
-    expires: parseInt(expires),
-    objectives,
-  };
-});
+const progressQuestSchema = z
+  .string()
+  .refine(
+    (s) => {
+      const parts = s.split('|');
+      if (parts.length < 5) return false;
+      const [, questId, , status, expires] = parts;
+      return (
+        Number.isFinite(parseInt(questId)) &&
+        Number.isFinite(parseInt(status)) &&
+        Number.isFinite(parseInt(expires))
+      );
+    },
+    { message: 'Invalid progress quest string' },
+  )
+  .transform((s) => {
+    const [key, questId, name, status, expires, ...objParts] = s.split('|');
+    const objectives = objParts.join('|')
+      ? objParts
+          .join('|')
+          .split('^')
+          .map((obj) => {
+            const [type, text, have, need] = obj.split('~');
+            return {
+              type,
+              text,
+              have: parseInt(have) || 0,
+              need: parseInt(need) || 0,
+            };
+          })
+      : [];
+    return {
+      key,
+      questId: parseInt(questId),
+      name,
+      status: parseInt(status),
+      expires: parseInt(expires),
+      objectives,
+    };
+  });
 
 const lockoutSchema = z.object({
   id: z.number(),

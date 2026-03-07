@@ -14,6 +14,11 @@ export const uploadAddonData = createServerFn({ method: 'POST' })
   .inputValidator(uploadInputSchema)
   .handler(async ({ context, data }) => {
     const { luaText } = data;
+    const userId = parseInt(context.userId);
+    if (!Number.isFinite(userId)) {
+      throw new Error('Invalid user id');
+    }
+
     const json = luaToJson(luaText);
     const parsed = uploadSchema.parse(JSON.parse(json));
 
@@ -21,11 +26,11 @@ export const uploadAddonData = createServerFn({ method: 'POST' })
     await boss.send(
       'process-addon-upload',
       {
-        userId: context.userId,
+        userId,
         upload: parsed,
       },
       {
-        singletonKey: `upload-${context.userId}`,
+        singletonKey: `upload-${userId}`,
         expireInMinutes: 10,
       },
     );
