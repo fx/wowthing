@@ -1,0 +1,35 @@
+{
+  "name": "wowthing",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "bun run src/db/seed.ts"
+  },
+  "dependencies": {
+    "@fx/ui": "0.0.0-28fe5ad",
+    "@tanstack/react-query": "^5",
+    "@tanstack/react-router": "^1",
+    "@tanstack/react-start": "^1",
+    "better-auth": "^1",
+    "drizzle-orm": "^0.39",
+    "pg-boss": "^10",
+    "postgres": "^3",
+    "tailwindcss": "^4",
+    "zod": "^3",
+    "yaml": "^2",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.30",
+    "typescript": "^5.7",
+    "vite": "^7",
+    "vite-tsconfig-paths": "^4"
+  }
+}
