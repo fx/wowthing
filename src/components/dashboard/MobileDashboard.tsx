@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, Badge } from '@fx/ui';
 import { CharacterName } from '~/components/shared/CharacterName';
 import { cn, CELL_COLORS, type ActivityState } from '~/lib/utils';
 import type { DashboardData } from '~/server/functions/activities';
-import type { VaultSlot, Lockout } from '~/db/types';
+import type { VaultSlot } from '~/db/types';
 
 type Character = DashboardData['characters'][number];
 type Activity = DashboardData['activities'][number];
@@ -103,11 +103,11 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
       <CardContent className="px-3 pb-2">
         {characters.map((char) => (
           <MobileCharacterRow key={char.id} character={char}>
-            <VaultDots slots={char.weeklyActivities?.[0]?.vaultDungeonProgress as VaultSlot[] | null} />
+            <VaultDots slots={char.weeklyActivities?.[0]?.vaultDungeonProgress} />
             <span className="text-zinc-600">|</span>
-            <VaultDots slots={char.weeklyActivities?.[0]?.vaultRaidProgress as VaultSlot[] | null} />
+            <VaultDots slots={char.weeklyActivities?.[0]?.vaultRaidProgress} />
             <span className="text-zinc-600">|</span>
-            <VaultDots slots={char.weeklyActivities?.[0]?.vaultWorldProgress as VaultSlot[] | null} />
+            <VaultDots slots={char.weeklyActivities?.[0]?.vaultWorldProgress} />
           </MobileCharacterRow>
         ))}
       </CardContent>
@@ -280,7 +280,7 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
 
   const activeRows = rows.filter((row) =>
     characters.some((char) => {
-      const lockouts = char.weeklyActivities?.[0]?.lockouts as Lockout[] | null;
+      const lockouts = char.weeklyActivities?.[0]?.lockouts;
       return lockouts?.some(
         (l) =>
           l.instanceId === row.raid.id &&
@@ -307,9 +307,7 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
               {row.raid.name} ({DIFF_SHORT[row.difficulty]})
             </div>
             {characters.map((char) => {
-              const lockouts = char.weeklyActivities?.[0]?.lockouts as
-                | Lockout[]
-                | null;
+              const lockouts = char.weeklyActivities?.[0]?.lockouts;
               const lockout = lockouts?.find(
                 (l) =>
                   l.instanceId === row.raid.id &&

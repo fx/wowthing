@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useRouter } from '@tanstack/react-router';
-import { useState, useCallback } from 'react';
+import { createFileRoute, redirect, Link, useRouter } from '@tanstack/react-router';
+import { useState, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@fx/ui';
 import { TypedButton } from '~/components/shared/TypedButton';
 import { authClient } from '~/lib/auth/client';
@@ -10,7 +10,7 @@ export const Route = createFileRoute('/upload')({
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) {
-      throw new Error('Not authenticated');
+      throw redirect({ to: '/login' });
     }
   },
   component: UploadPage,
@@ -22,10 +22,11 @@ function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     async (file: File) => {
-      if (!file.name.endsWith('.lua')) {
+      if (!file.name.toLowerCase().endsWith('.lua')) {
         setStatus('error');
         setErrorMessage('Only .lua files are accepted');
         return;
@@ -45,6 +46,10 @@ function UploadPage() {
     [router],
   );
 
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Upload Addon Data</h1>
@@ -59,6 +64,18 @@ function UploadPage() {
         WoW/WTF/Account/YOUR_ACCOUNT/SavedVariables/WoWthing_Collector.lua
       </code>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".lua"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+          e.target.value = '';
+        }}
+      />
+
       <Card
         className={cn(
           'border-2 border-dashed p-12 text-center cursor-pointer transition-colors',
@@ -68,6 +85,14 @@ function UploadPage() {
           status === 'done' && 'border-emerald-500/50 bg-emerald-500/5',
           status === 'error' && 'border-red-500/50 bg-red-500/5',
         )}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openFilePicker();
+          }
+        }}
         onDragOver={(e: React.DragEvent) => {
           e.preventDefault();
           setIsDragging(true);
@@ -79,13 +104,7 @@ function UploadPage() {
           const file = e.dataTransfer.files[0];
           if (file) handleFile(file);
         }}
-        onClick={() => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.lua';
-          input.onchange = () => input.files?.[0] && handleFile(input.files[0]);
-          input.click();
-        }}
+        onClick={openFilePicker}
       >
         <CardContent className="p-0">
           {status === 'idle' && (
@@ -116,9 +135,9 @@ function UploadPage() {
 
       <div className="flex gap-2">
         {status === 'done' && (
-          <Link to="/">
-            <TypedButton>Back to Dashboard</TypedButton>
-          </Link>
+          <TypedButton onClick={() => router.navigate({ to: '/' })}>
+            Back to Dashboard
+          </TypedButton>
         )}
         {(status === 'done' || status === 'error') && (
           <TypedButton variant="outline" onClick={() => setStatus('idle')}>
