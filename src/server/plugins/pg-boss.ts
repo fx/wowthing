@@ -1,4 +1,6 @@
 import PgBoss from 'pg-boss';
+import { processAddonUpload } from '~/lib/addon/processor';
+import type { AddonUpload } from '~/lib/addon/schema';
 import { syncUserProfile } from '~/lib/blizzard/sync-profile';
 import {
   syncCharacterProfile,
@@ -89,8 +91,13 @@ export async function startBoss(): Promise<PgBoss> {
   await boss.work<JobRegistry['process-addon-upload']>(
     'process-addon-upload',
     { batchSize: 1 },
-    async (_jobs) => {
-      // TODO: implement in Wave 4b
+    async (jobs) => {
+      for (const job of jobs) {
+        await processAddonUpload(
+          job.data.userId,
+          job.data.upload as AddonUpload,
+        );
+      }
     },
   );
 
