@@ -1165,7 +1165,7 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
 - [x] Activity seed system
   - [x] Write `seeds/activities.yaml` with all Midnight S1 activities (quest IDs, currency IDs, instance IDs from poc.md section 12)
   - [x] Implement `src/db/seed.ts` — YAML parser, idempotent upsert on `activity_definitions.key`
-  - [ ] Verify `bun db:seed` populates the activity_definitions table correctly
+  - [x] Verify `bun db:seed` populates the activity_definitions table correctly
 - [x] pg-boss plugin
   - [x] Create `src/server/plugins/pg-boss.ts` skeleton — boss lifecycle (start/stop), `getBoss()` export
   - [x] Define `JobRegistry` type for all job names and payload shapes
@@ -1177,21 +1177,21 @@ ENCRYPTION_KEY=<64 hex chars = 32 bytes for AES-256-GCM>
   - [x] Implement AES-256-GCM token encryption/decryption (`src/lib/auth/encryption.ts`)
   - [x] Create auth middleware for server functions (`src/lib/auth/middleware.ts`)
   - [x] Create Better Auth catch-all API route (`src/routes/api/auth/$.ts`)
-  - [ ] Add post-login hook to enqueue initial user profile sync job
+  - [x] Add post-login hook to enqueue initial user profile sync job
   - [x] Set up environment variables (BATTLENET_CLIENT_ID, BATTLENET_CLIENT_SECRET, BETTER_AUTH_SECRET, ENCRYPTION_KEY)
-  - [ ] Test full login flow: Battle.net redirect → callback → session cookie → redirect to dashboard
+  - [x] Test full login flow: Battle.net redirect → callback → session cookie → redirect to dashboard
 - [x] Blizzard API client
   - [x] Implement `BlizzardClient` class with Zod-validated `fetch()`, 304 support, and error classes (`src/lib/blizzard/client.ts`)
   - [x] Write Zod schemas for all API responses (`src/lib/blizzard/schemas.ts` — userProfile, characterProfile, completedQuests, reputations)
-- [ ] Blizzard API sync workers
-  - [ ] Implement `syncUserProfile` — fetch `/profile/user/wow`, upsert accounts + characters, initialize sync_state rows (`src/lib/blizzard/sync-profile.ts`)
-  - [ ] Implement `syncCharacterProfile` — fetch character endpoint, upsert level/ilvl/class, update sync_state (`src/lib/blizzard/sync.ts`)
-  - [ ] Implement `syncCharacterQuests` — fetch completed quests, insert quest_completions for current reset week
-  - [ ] Implement `syncCharacterReputations` — fetch reputations, upsert renown for Midnight factions
-  - [ ] Implement sync_state helpers: `getSyncState`, `updateSyncState`, `incrementSyncError` with exponential backoff
-  - [ ] Implement token refresh logic for expired Blizzard access tokens
-- [ ] Blizzard API scheduler
-  - [ ] Implement `scheduleCharacterSyncs` — query sync_state for due characters, enqueue jobs with singletonKey dedup (`src/lib/blizzard/scheduler.ts`)
+- [x] Blizzard API sync workers
+  - [x] Implement `syncUserProfile` — fetch `/profile/user/wow`, upsert accounts + characters, initialize sync_state rows (`src/lib/blizzard/sync-profile.ts`)
+  - [x] Implement `syncCharacterProfile` — fetch character endpoint, upsert level/ilvl/class, update sync_state (`src/lib/blizzard/sync.ts`)
+  - [x] Implement `syncCharacterQuests` — fetch completed quests, insert quest_completions for current reset week
+  - [x] Implement `syncCharacterReputations` — fetch reputations, upsert renown for Midnight factions
+  - [x] Implement sync_state helpers: `getSyncState`, `updateSyncState`, `incrementSyncError` with exponential backoff
+  - [x] Implement token refresh logic for expired Blizzard access tokens
+- [x] Blizzard API scheduler
+  - [x] Implement `scheduleCharacterSyncs` — query sync_state for due characters, enqueue jobs with singletonKey dedup (`src/lib/blizzard/scheduler.ts`)
 - [x] Addon upload pipeline: Lua parser
   - [x] Port `LuaToJsonConverter4` from C# to TypeScript (`src/lib/addon/lua-parser.ts`)
   - [x] Handle: nested tables, `["key"] = value`, `[123] = value`, Lua comments, trailing commas, `WWTCSaved =` prefix
