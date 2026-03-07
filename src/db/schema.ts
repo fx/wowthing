@@ -1,0 +1,266 @@
+import {
+  pgTable,
+  text,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  serial,
+  uniqueIndex,
+  index,
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+// === Users ===
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  battleNetId: integer('battle_net_id').notNull().unique(),
+  battleTag: text('battle_tag').notNull(),
+  accessToken: text('access_token').notNull(), // AES-256-GCM encrypted
+  refreshToken: text('refresh_token'), // AES-256-GCM encrypted
+  tokenExpiresAt: timestamp('token_expires_at').notNull(),
+  region: text('region').notNull(), // 'us' | 'eu' | 'kr' | 'tw'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// === Accounts ===
+export const accounts = pgTable('accounts', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  battleNetAccountId: integer('battle_net_account_id').notNull(),
+  region: text('region').notNull(),
+  displayName: text('display_name'),
+});
+
+// === Characters ===
+export const characters = pgTable(
+  'characters',
+  {
+    id: serial('id').primaryKey(),
+    accountId: integer('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    blizzardId: integer('blizzard_id').notNull(),
+    name: text('name').notNull(),
+    realmSlug: text('realm_slug').notNull(),
+    classId: integer('class_id').notNull(),
+    raceId: integer('race_id').notNull(),
+    faction: text('faction').notNull(), // 'alliance' | 'horde'
+    level: integer('level').notNull(),
+    itemLevel: integer('item_level'),
+    lastApiSyncAt: timestamp('last_api_sync_at'),
+    lastApiModified: text('last_api_modified'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [index('idx_characters_account').on(t.accountId)],
+);
+
+// === Weekly Activity Snapshots ===
+export const weeklyActivities = pgTable(
+  'weekly_activities',
+  {
+    id: serial('id').primaryKey(),
+    characterId: integer('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    resetWeek: text('reset_week').notNull(), // "2026-W10"
+    vaultDungeonProgress: jsonb('vault_dungeon_progress'), // VaultSlot[]
+    vaultRaidProgress: jsonb('vault_raid_progress'), // VaultSlot[]
+    vaultWorldProgress: jsonb('vault_world_progress'), // VaultSlot[]
+    vaultHasRewards: boolean('vault_has_rewards').default(false),
+    keystoneDungeonId: integer('keystone_dungeon_id'),
+    keystoneLevel: integer('keystone_level'),
+    lockouts: jsonb('lockouts'), // Lockout[]
+    syncedAt: timestamp('synced_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_weekly_char_week').on(t.characterId, t.resetWeek),
+  ],
+);
+
+// === Quest Completions ===
+export const questCompletions = pgTable(
+  'quest_completions',
+  {
+    id: serial('id').primaryKey(),
+    characterId: integer('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    questId: integer('quest_id').notNull(),
+    resetType: text('reset_type').notNull(), // 'daily' | 'weekly'
+    resetWeek: text('reset_week'),
+    resetDate: text('reset_date'), // YYYY-MM-DD
+    completedAt: timestamp('completed_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_quests_char_quest_week').on(
+      t.characterId,
+      t.questId,
+      t.resetWeek,
+    ),
+    index('idx_quests_char_quest_date').on(
+      t.characterId,
+      t.questId,
+      t.resetDate,
+    ),
+  ],
+);
+
+// === Currencies ===
+export const currencies = pgTable(
+  'currencies',
+  {
+    id: serial('id').primaryKey(),
+    characterId: integer('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    currencyId: integer('currency_id').notNull(),
+    quantity: integer('quantity').notNull().default(0),
+    maxQuantity: integer('max_quantity'),
+    weekQuantity: integer('week_quantity'),
+    weekMax: integer('week_max'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_currencies_char_currency').on(
+      t.characterId,
+      t.currencyId,
+    ),
+  ],
+);
+
+// === Renown (account-wide) ===
+export const renown = pgTable(
+  'renown',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    factionId: integer('faction_id').notNull(),
+    renownLevel: integer('renown_level').notNull().default(0),
+    reputationCurrent: integer('reputation_current').notNull().default(0),
+    reputationMax: integer('reputation_max').notNull().default(2500),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_renown_user_faction').on(t.userId, t.factionId),
+  ],
+);
+
+// === Activity Definitions (seeded) ===
+export const activityDefinitions = pgTable(
+  'activity_definitions',
+  {
+    id: serial('id').primaryKey(),
+    expansionId: integer('expansion_id').notNull(), // 11 = Midnight
+    patch: text('patch').notNull(), // "12.0.0"
+    category: text('category').notNull(), // 'weekly' | 'daily'
+    key: text('key').notNull().unique(),
+    name: text('name').notNull(),
+    shortName: text('short_name').notNull(),
+    description: text('description'),
+    resetType: text('reset_type').notNull(), // 'daily' | 'weekly' | 'biweekly'
+    questIds: integer('quest_ids').array(),
+    threshold: integer('threshold'),
+    accountWide: boolean('account_wide').default(false),
+    sortOrder: integer('sort_order').notNull().default(0),
+    enabled: boolean('enabled').default(true),
+    metadata: jsonb('metadata'),
+  },
+  (t) => [
+    index('idx_activity_defs_expansion').on(t.expansionId, t.category),
+  ],
+);
+
+// === Sessions ===
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_sessions_user').on(t.userId),
+    index('idx_sessions_expires').on(t.expiresAt),
+  ],
+);
+
+// === Sync State ===
+export const syncState = pgTable(
+  'sync_state',
+  {
+    id: serial('id').primaryKey(),
+    characterId: integer('character_id')
+      .notNull()
+      .references(() => characters.id, { onDelete: 'cascade' }),
+    syncType: text('sync_type').notNull(),
+    lastSyncedAt: timestamp('last_synced_at'),
+    lastModifiedHeader: text('last_modified_header'),
+    nextSyncAfter: timestamp('next_sync_after'),
+    errorCount: integer('error_count').default(0),
+  },
+  (t) => [
+    uniqueIndex('idx_sync_char_type').on(t.characterId, t.syncType),
+    index('idx_sync_next').on(t.nextSyncAfter),
+  ],
+);
+
+// === Relations ===
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  renown: many(renown),
+}));
+
+export const accountsRelations = relations(accounts, ({ one, many }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+  characters: many(characters),
+}));
+
+export const charactersRelations = relations(
+  characters,
+  ({ one, many }) => ({
+    account: one(accounts, {
+      fields: [characters.accountId],
+      references: [accounts.id],
+    }),
+    weeklyActivities: many(weeklyActivities),
+    questCompletions: many(questCompletions),
+    currencies: many(currencies),
+  }),
+);
+
+export const weeklyActivitiesRelations = relations(
+  weeklyActivities,
+  ({ one }) => ({
+    character: one(characters, {
+      fields: [weeklyActivities.characterId],
+      references: [characters.id],
+    }),
+  }),
+);
+
+export const questCompletionsRelations = relations(
+  questCompletions,
+  ({ one }) => ({
+    character: one(characters, {
+      fields: [questCompletions.characterId],
+      references: [characters.id],
+    }),
+  }),
+);
+
+export const currenciesRelations = relations(currencies, ({ one }) => ({
+  character: one(characters, {
+    fields: [currencies.characterId],
+    references: [characters.id],
+  }),
+}));
