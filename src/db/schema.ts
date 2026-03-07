@@ -75,6 +75,7 @@ export const verification = pgTable('verification', {
 // === Users ===
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
+  betterAuthUserId: text('better_auth_user_id').unique(),
   battleNetId: integer('battle_net_id').notNull().unique(),
   battleTag: text('battle_tag').notNull(),
   accessToken: text('access_token').notNull(), // AES-256-GCM encrypted

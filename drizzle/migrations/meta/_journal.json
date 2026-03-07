@@ -15,6 +15,13 @@
       "when": 1772922573603,
       "tag": "0001_modern_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772925354224,
+      "tag": "0002_marvelous_metal_master",
+      "breakpoints": true
     }
   ]
 }
