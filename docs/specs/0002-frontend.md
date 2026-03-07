@@ -1262,31 +1262,31 @@ export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
 
 ## Tasks
 
-- [ ] @fx/ui integration and shared utilities
-  - [ ] Verify @fx/ui component API surface (Card compound components, Tooltip API)
-  - [ ] Create `src/lib/utils.ts` — `cn()` helper, `ActivityState` type, `STATE_CLASSES` / `CELL_COLORS` maps, `getActivityState()` function
+- [x] @fx/ui integration and shared utilities
+  - [x] Verify @fx/ui component API surface (Card compound components, Tooltip API)
+  - [x] Create `src/lib/utils.ts` — `cn()` helper, `ActivityState` type, `STATE_CLASSES` / `CELL_COLORS` maps, `getActivityState()` function
   - [ ] Create `src/lib/wow/classes.ts` — `CLASS_COLORS` record for all 13 WoW classes
-  - [ ] Create `src/hooks/useMediaQuery.ts` — responsive breakpoint hook
-  - [ ] Create `src/hooks/useResetTimer.ts` — countdown timer hook with 1s interval
-  - [ ] Create `src/hooks/useCollapsedColumns.ts` — localStorage-backed collapsed column state
+  - [x] Create `src/hooks/useMediaQuery.ts` — responsive breakpoint hook
+  - [x] Create `src/hooks/useResetTimer.ts` — countdown timer hook with 1s interval
+  - [x] Create `src/hooks/useCollapsedColumns.ts` — localStorage-backed collapsed column state
 - [ ] Matrix grid system (desktop)
   - [ ] Implement `src/components/dashboard/MatrixGrid.tsx` — shared wrapper with sticky first column, horizontal scroll, per-character column collapse toggle
   - [ ] Implement `src/components/dashboard/StatusCell.tsx` — dense colored indicator cell with tooltip
   - [ ] Verify horizontal scroll + sticky column behavior with 10+ character columns
-- [ ] Root layout and navigation
-  - [ ] Implement `src/routes/__root.tsx` — html/head/body shell with `<Nav />` and `<Outlet />`
-  - [ ] Implement `src/components/layout/Nav.tsx` — sticky nav bar with app name, reset timers (desktop), theme toggle, user dropdown (Sync Now, Upload, Logout)
-  - [ ] Implement `src/components/layout/ResetTimers.tsx` — daily/weekly countdown badges using `useResetTimer`
+- [x] Root layout and navigation
+  - [x] Implement `src/routes/__root.tsx` — html/head/body shell with `<Nav />` and `<Outlet />`
+  - [x] Implement `src/components/layout/Nav.tsx` — sticky nav bar with app name, reset timers (desktop), theme toggle, user dropdown (Sync Now, Upload, Logout)
+  - [x] Implement `src/components/layout/ResetTimers.tsx` — daily/weekly countdown badges using `useResetTimer`
   - [ ] Wire theme toggle using @fx/ui's built-in dark/light mode support
-  - [ ] Handle mobile nav layout (reset timers below nav bar, Sheet for menu if needed)
-- [ ] Login page
-  - [ ] Implement `src/routes/login.tsx` — centered Card with Battle.net login Button linking to `/api/auth/signin/battlenet`
+  - [x] Handle mobile nav layout (reset timers below nav bar, Sheet for menu if needed)
+- [x] Login page
+  - [x] Implement `src/routes/login.tsx` — centered Card with Battle.net login Button linking to `/api/auth/signin/battlenet`
 - [ ] Dashboard route and data loading
   - [ ] Implement `src/routes/index.tsx` — `beforeLoad` auth guard, loader calling `getDashboardData()`, `staleTime: 60_000`
   - [ ] Implement `src/components/dashboard/Dashboard.tsx` — top-level component that switches between `DesktopDashboard` (with collapse state) and `MobileDashboard` at 768px
   - [ ] Implement `src/components/dashboard/EmptyState.tsx` — shown when no characters exist, links to upload page
-- [ ] Shared components
-  - [ ] Implement `src/components/shared/CharacterName.tsx` — character name with class color styling
+- [x] Shared components
+  - [x] Implement `src/components/shared/CharacterName.tsx` — character name with class color styling
 - [ ] Dashboard Section: Great Vault
   - [ ] Implement `src/components/dashboard/VaultSection.tsx` — MatrixGrid with M+/Raid/World rows
   - [ ] Implement `VaultDots` sub-component — 3 compact dots per tier with Tooltip showing progress and ilvl
