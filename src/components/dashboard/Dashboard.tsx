@@ -1,6 +1,7 @@
 import { useMediaQuery } from '~/hooks/useMediaQuery';
 import { useCollapsedColumns } from '~/hooks/useCollapsedColumns';
 import { EmptyState } from './EmptyState';
+import { MobileDashboard } from './MobileDashboard';
 import { VaultSection } from './VaultSection';
 import { WeeklyChecklist } from './WeeklyChecklist';
 import { CrestTracker } from './CrestTracker';
@@ -20,7 +21,7 @@ export function Dashboard(props: DashboardData) {
   }
 
   if (isMobile) {
-    return <div className="text-center text-muted-foreground py-8">Mobile dashboard coming soon</div>;
+    return <MobileDashboard characters={characters} activities={activities} renown={renown} />;
   }
 
   const weeklyActivities = activities.filter((a) => a.category === 'weekly');
