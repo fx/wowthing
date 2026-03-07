@@ -1,0 +1,15 @@
+export const CLASS_COLORS: Record<number, { name: string; color: string }> = {
+  1: { name: 'Warrior', color: '#C79C6E' },
+  2: { name: 'Paladin', color: '#F58CBA' },
+  3: { name: 'Hunter', color: '#ABD473' },
+  4: { name: 'Rogue', color: '#FFF569' },
+  5: { name: 'Priest', color: '#FFFFFF' },
+  6: { name: 'Death Knight', color: '#C41E3A' },
+  7: { name: 'Shaman', color: '#0070DE' },
+  8: { name: 'Mage', color: '#69CCF0' },
+  9: { name: 'Warlock', color: '#9482C9' },
+  10: { name: 'Monk', color: '#00FF96' },
+  11: { name: 'Druid', color: '#FF7D0A' },
+  12: { name: 'Demon Hunter', color: '#A330C9' },
+  13: { name: 'Evoker', color: '#33937F' },
+};
