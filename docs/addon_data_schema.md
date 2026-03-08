@@ -47,11 +47,11 @@ WWTCSaved = {
 
 ## Character Data (`chars`)
 
-Keyed by Blizzard character GUID: `"Player-{realmId}-{characterGuid}"`.
+Keyed by numeric Blizzard character ID (blizzardId) as a string.
 
-Example: `"Player-1168-0A813ABB"`
+Example: `"123456789"`
 
-> **Note:** These keys differ from the integer `blizzardId` stored in our `characters` table (which comes from the Blizzard API profile endpoint). A mapping strategy is needed.
+The processor parses these keys with `parseInt(key, 10)` and matches them against the `blizzardId` column in the `characters` table (which comes from the Blizzard API profile endpoint).
 
 ### Character Keys
 
