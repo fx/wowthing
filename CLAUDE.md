@@ -33,6 +33,22 @@ bun .output/server/index.mjs
 sudo docker compose up -d
 ```
 
+## Upstream WoWThing References
+
+This project is a reimplementation of WoWThing. Always consult these upstream repos for parity:
+
+- **Addon** (Lua, in-game data collector): https://github.com/ThingEngineering/wowthing-collector
+  - Character keys use Player GUID format: `Player-{realmId}-{hexCharId}`
+  - The hex portion converts to the Blizzard API numeric character ID
+  - Only the active (logged-in) character has a `name` field; all others have `name = nil`
+  - Guild key format: `{regionNumber}/{realmName}/{guildName}` (1=US, 2=KR, 3=EU, 4=TW)
+  - Currency string format: `qty:max:isWeekly:weekQty:weekMax:isMovingMax:totalQty`
+
+- **App** (C#/.NET backend + Vue frontend): https://github.com/ThingEngineering/wowthing-again
+  - Character matching: regex extracts hex from Player GUID, converts to decimal blizzardId
+  - Character metadata (name, class, race, realm) comes from Blizzard API, not the addon
+  - Upload processing: `apps/backend/Jobs/User/UserUploadJob.cs`
+
 ## Architecture
 
 **TanStack Start** SSR app (React 19 + Vite 7) tracking World of Warcraft weekly activities.

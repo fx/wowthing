@@ -1,0 +1,1 @@
+ALTER TABLE "weekly_activities" ADD COLUMN "weekly_progress" jsonb;

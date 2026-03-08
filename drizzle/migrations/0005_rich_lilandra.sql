@@ -1,0 +1,1 @@
+ALTER TABLE "weekly_activities" ADD COLUMN "prey_hunts_completed" integer;

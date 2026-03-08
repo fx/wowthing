@@ -4,7 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
-import { cn, CELL_COLORS, type ActivityState } from '~/lib/utils';
+import { type ActivityState, CELL_COLORS, cn } from '~/lib/utils';
 
 interface StatusCellProps {
   state: ActivityState;
@@ -13,7 +13,12 @@ interface StatusCellProps {
   collapsed?: boolean;
 }
 
-export function StatusCell({ state, label, tooltip, collapsed }: StatusCellProps) {
+export function StatusCell({
+  state,
+  label,
+  tooltip,
+  collapsed,
+}: StatusCellProps) {
   if (collapsed) return <td className="w-8" />;
 
   return (
@@ -28,7 +33,10 @@ export function StatusCell({ state, label, tooltip, collapsed }: StatusCellProps
                 CELL_COLORS[state],
               )}
             >
-              {label ?? (state === 'complete' || state === 'account-done' ? '\u2713' : '\u2014')}
+              {label ??
+                (state === 'complete' || state === 'account-done'
+                  ? '\u2713'
+                  : '\u2014')}
             </div>
           </TooltipTrigger>
           <TooltipContent>{tooltip}</TooltipContent>

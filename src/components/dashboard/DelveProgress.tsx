@@ -5,26 +5,27 @@ import { StatusCell } from './StatusCell';
 
 type Character = DashboardData['characters'][number];
 
-interface KeystoneDisplayProps {
+interface DelveProgressProps {
   characters: Character[];
   collapsedColumns: Set<string>;
   onToggleCollapse: (id: string) => void;
 }
 
-export function KeystoneDisplay({
+export function DelveProgress({
   characters,
   collapsedColumns,
   onToggleCollapse,
-}: KeystoneDisplayProps) {
-  const hasAnyKey = characters.some(
-    (c) => c.weeklyActivities?.[0]?.keystoneLevel,
+}: DelveProgressProps) {
+  const hasAnyDelves = characters.some(
+    (c) => c.weeklyActivities?.[0]?.delvesGilded != null,
   );
-  if (!hasAnyKey) return null;
+
+  if (!hasAnyDelves) return null;
 
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Mythic+ Keystones</CardTitle>
+        <CardTitle className="text-sm">Delves</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <MatrixGrid
@@ -34,20 +35,17 @@ export function KeystoneDisplay({
         >
           {({ characters, isCollapsed }) => (
             <tr>
-              <td className="sticky left-0 z-10 bg-card p-2 text-sm">Key</td>
+              <td className="sticky left-0 z-10 bg-card p-2 text-sm">Gilded</td>
               {characters.map((char) => {
-                const weekly = char.weeklyActivities?.[0];
-                const level = weekly?.keystoneLevel;
+                const gilded = char.weeklyActivities?.[0]?.delvesGilded ?? 0;
+                const state =
+                  gilded > 0 ? ('complete' as const) : ('not-started' as const);
                 return (
                   <StatusCell
                     key={char.id}
-                    state={level ? 'complete' : 'not-started'}
-                    label={level ? `+${level}` : undefined}
-                    tooltip={
-                      level
-                        ? `${char.name}: +${level}`
-                        : `${char.name}: No keystone`
-                    }
+                    state={state}
+                    label={gilded > 0 ? String(gilded) : undefined}
+                    tooltip={`${char.name}: ${gilded} gilded delves`}
                     collapsed={isCollapsed(char.id)}
                   />
                 );

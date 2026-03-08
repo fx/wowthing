@@ -8,37 +8,80 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
+import type { WeeklyProgress } from '~/db/types';
+import type { DashboardData } from '~/server/functions/activities';
+import type { ActivityState } from '~/lib/utils';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
-import type { DashboardData } from '~/server/functions/activities';
 
 type Character = DashboardData['characters'][number];
-type ActivityDef = DashboardData['activities'][number];
 
 interface WeeklyChecklistProps {
   characters: Character[];
-  activities: ActivityDef[];
   collapsedColumns: Set<string>;
   onToggleCollapse: (id: string) => void;
 }
 
+/** All rows in the weekly chores grid, derived from ChoreTracker Midnight definitions */
+const WEEKLY_ROWS = [
+  { key: 'unity', label: 'Unity', tooltip: 'Midnight Unity pillars (13 total)' },
+  { key: 'abundance', label: 'Abundance', tooltip: 'Abundant Offerings weekly' },
+  { key: 'soiree', label: 'Soiree', tooltip: "Saltheril's Soiree runestone quests (4 total)" },
+  { key: 'stormarion', label: 'Stormarion', tooltip: 'Stormarion Assault weekly' },
+  { key: 'special_assignments', label: 'SA', tooltip: 'Special Assignments (2 active per week)' },
+  { key: 'prey_hard', label: 'Prey (Hard)', tooltip: 'Hard prey hunts — first 2 reward a chest (4/week max)' },
+  { key: 'prey_normal', label: 'Prey (Normal)', tooltip: 'Normal prey hunts (4/week max)' },
+  { key: 'prey_nightmare', label: 'Prey (NM)', tooltip: 'Nightmare prey hunts (4/week max)' },
+  { key: 'dungeon_weeklies', label: 'Dungeons', tooltip: 'Dungeon weekly quests (8 account-wide)' },
+  { key: 'delves', label: 'Delves', tooltip: 'Delve completion quests' },
+] as const;
+
+function getWp(char: Character): WeeklyProgress | null {
+  return (char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined) ?? null;
+}
+
+function countUnity(wp: WeeklyProgress): number {
+  if (!wp.unity) return 0;
+  return Object.values(wp.unity).filter(Boolean).length;
+}
+
+function countSoiree(wp: WeeklyProgress): number {
+  if (!wp.soiree) return 0;
+  return Object.values(wp.soiree).filter(Boolean).length;
+}
+
 export function WeeklyChecklist({
   characters,
-  activities,
   collapsedColumns,
   onToggleCollapse,
 }: WeeklyChecklistProps) {
-  const checklistActivities = activities.filter(
-    (a) =>
-      !a.key.startsWith('vault_') &&
-      !a.key.startsWith('dawncrest_') &&
-      !a.key.startsWith('lockout_'),
+  // Only show rows where at least one character has data
+  const activeRows = WEEKLY_ROWS.filter((row) =>
+    characters.some((char) => {
+      const wp = getWp(char);
+      if (!wp) return false;
+      switch (row.key) {
+        case 'unity': return countUnity(wp) > 0;
+        case 'abundance': return wp.abundance;
+        case 'soiree': return countSoiree(wp) > 0;
+        case 'stormarion': return wp.stormarion;
+        case 'prey_normal': return (wp.prey?.normal ?? 0) > 0;
+        case 'prey_hard': return (wp.prey?.hard ?? 0) > 0;
+        case 'prey_nightmare': return (wp.prey?.nightmare ?? 0) > 0;
+        case 'special_assignments': return (wp.specialAssignments?.length ?? 0) > 0;
+        case 'dungeon_weeklies': return (wp.dungeonWeeklies?.length ?? 0) > 0;
+        case 'delves': return (wp.delves?.length ?? 0) > 0;
+        default: return false;
+      }
+    }),
   );
+
+  if (activeRows.length === 0) return null;
 
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Weekly Checklist</CardTitle>
+        <CardTitle className="text-sm">Weekly Chores</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <MatrixGrid
@@ -48,22 +91,20 @@ export function WeeklyChecklist({
         >
           {({ characters, isCollapsed }) => (
             <>
-              {checklistActivities.map((activity) => (
-                <tr key={activity.key}>
+              {activeRows.map((row) => (
+                <tr key={row.key}>
                   <td className="sticky left-0 z-10 bg-card p-2 text-sm">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span tabIndex={0}>{activity.shortName}</span>
+                          <span tabIndex={0}>{row.label}</span>
                         </TooltipTrigger>
-                        <TooltipContent>
-                          {activity.description ?? activity.name}
-                        </TooltipContent>
+                        <TooltipContent>{row.tooltip}</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </td>
                   {characters.map((char) => {
-                    const { state, label, tooltip } = resolveActivityStatus(char, activity);
+                    const { state, label, tooltip } = resolveRowStatus(char, row.key);
                     return (
                       <StatusCell
                         key={char.id}
@@ -84,30 +125,147 @@ export function WeeklyChecklist({
   );
 }
 
-function resolveActivityStatus(char: Character, activity: ActivityDef) {
-  const completions = char.questCompletions ?? [];
-  const matches = completions.filter((qc) => activity.questIds?.includes(qc.questId));
+function resolvePreyStatus(count: number): { state: ActivityState; label: string; tooltip: string } {
+  const state: ActivityState = count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+  return { state, label: `${count}/4`, tooltip: `${count}/4 completed this week` };
+}
 
-  if (activity.accountWide && matches.length > 0) {
-    return {
-      state: 'account-done' as const,
-      label: '\u2713',
-      tooltip: `${activity.name}: Done (account-wide)`,
-    };
+function boolState(done: boolean): ActivityState {
+  return done ? 'complete' : 'not-started';
+}
+
+const UNITY_LABELS: Record<string, string> = {
+  abundance: 'Abundance',
+  arcantina: 'Arcantina',
+  battlegrounds: 'Battlegrounds',
+  delves: 'Delves',
+  dungeons: 'Dungeons',
+  housing: 'Housing',
+  haranir: 'Haranir',
+  prey: 'Prey',
+  raid: 'Raid',
+  soiree: 'Soiree',
+  stormarion: 'Stormarion',
+  worldBoss: 'World Boss',
+  worldQuests: 'World Quests',
+};
+
+const SOIREE_LABELS: Record<string, string> = {
+  magisters: 'Magisters',
+  bloodKnights: 'Blood Knights',
+  farstriders: 'Farstriders',
+  shades: 'Shades of the Row',
+};
+
+function resolveRowStatus(
+  char: Character,
+  rowKey: string,
+): { state: ActivityState; label: string | undefined; tooltip: string } {
+  const wp = getWp(char);
+
+  switch (rowKey) {
+    case 'unity': {
+      const count = wp ? countUnity(wp) : 0;
+      const state: ActivityState = count >= 13 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+      const details = wp?.unity
+        ? Object.entries(wp.unity)
+            .map(([k, v]) => `${v ? '\u2713' : '\u2717'} ${UNITY_LABELS[k] ?? k}`)
+            .join('\n')
+        : '';
+      return { state, label: `${count}/13`, tooltip: `Unity Pillars:\n${details}` };
+    }
+
+    case 'abundance':
+      return {
+        state: boolState(wp?.abundance ?? false),
+        label: wp?.abundance ? '\u2713' : undefined,
+        tooltip: 'Abundant Offerings weekly',
+      };
+
+    case 'soiree': {
+      const count = wp ? countSoiree(wp) : 0;
+      const state: ActivityState = count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+      const details = wp?.soiree
+        ? Object.entries(wp.soiree)
+            .map(([k, v]) => `${v ? '\u2713' : '\u2717'} ${SOIREE_LABELS[k] ?? k}`)
+            .join('\n')
+        : '';
+      return { state, label: `${count}/4`, tooltip: `Soiree Runestones:\n${details}` };
+    }
+
+    case 'stormarion':
+      return {
+        state: boolState(wp?.stormarion ?? false),
+        label: wp?.stormarion ? '\u2713' : undefined,
+        tooltip: 'Stormarion Assault weekly',
+      };
+
+    case 'prey_normal': return resolvePreyStatus(wp?.prey?.normal ?? 0);
+    case 'prey_hard': return resolvePreyStatus(wp?.prey?.hard ?? 0);
+    case 'prey_nightmare': return resolvePreyStatus(wp?.prey?.nightmare ?? 0);
+
+    case 'special_assignments': {
+      const sas = wp?.specialAssignments ?? [];
+      const completed = sas.filter((s) => s.completed).length;
+      const hasProgress = sas.some((s) => !s.completed && (s.have ?? 0) > 0);
+      const state: ActivityState =
+        sas.length === 0
+          ? 'not-started'
+          : completed === sas.length
+            ? 'complete'
+            : completed > 0 || hasProgress
+              ? 'in-progress'
+              : 'not-started';
+      const names = sas.map((s) => {
+        const icon = s.completed ? '\u2713' : '\u2717';
+        const progress = s.have != null && s.need != null ? ` (${s.have}/${s.need})` : '';
+        return `${icon} ${s.name}${progress}`;
+      }).join('\n');
+      return {
+        state,
+        label: sas.length > 0 ? `${completed}/${sas.length}` : undefined,
+        tooltip: sas.length > 0 ? `Special Assignments:\n${names}` : 'No active SAs',
+      };
+    }
+
+    case 'dungeon_weeklies': {
+      const dws = wp?.dungeonWeeklies ?? [];
+      const completed = dws.filter((d) => d.completed).length;
+      const state: ActivityState =
+        dws.length === 0
+          ? 'not-started'
+          : completed === dws.length
+            ? 'complete'
+            : completed > 0
+              ? 'in-progress'
+              : 'not-started';
+      const names = dws.map((d) => `${d.completed ? '\u2713' : '\u2717'} ${d.name}`).join('\n');
+      return {
+        state,
+        label: dws.length > 0 ? `${completed}/${dws.length}` : undefined,
+        tooltip: dws.length > 0 ? `Dungeon Weeklies:\n${names}` : 'No dungeon weeklies',
+      };
+    }
+
+    case 'delves': {
+      const dvs = wp?.delves ?? [];
+      const completed = dvs.filter((d) => d.completed).length;
+      const state: ActivityState =
+        dvs.length === 0
+          ? 'not-started'
+          : completed === dvs.length
+            ? 'complete'
+            : completed > 0
+              ? 'in-progress'
+              : 'not-started';
+      return {
+        state,
+        label: dvs.length > 0 ? `${completed}/${dvs.length}` : undefined,
+        tooltip: dvs.length > 0 ? `Delves: ${completed}/${dvs.length} complete` : 'No delve quests',
+      };
+    }
+
+    default:
+      return { state: 'not-started', label: undefined, tooltip: '' };
   }
-  if (activity.threshold && activity.threshold > 1) {
-    const count = matches.length;
-    const done = count >= activity.threshold;
-    return {
-      state: done ? ('complete' as const) : count > 0 ? ('in-progress' as const) : ('not-started' as const),
-      label: `${count}/${activity.threshold}`,
-      tooltip: `${activity.name}: ${count}/${activity.threshold}`,
-    };
-  }
-  const done = matches.length > 0;
-  return {
-    state: done ? ('complete' as const) : ('not-started' as const),
-    label: undefined,
-    tooltip: `${activity.name}: ${done ? 'Complete' : 'Not started'}`,
-  };
 }

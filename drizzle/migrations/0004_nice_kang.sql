@@ -1,0 +1,1 @@
+ALTER TABLE "weekly_activities" ADD COLUMN "delves_gilded" integer;

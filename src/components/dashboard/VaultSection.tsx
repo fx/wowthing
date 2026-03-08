@@ -8,10 +8,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
-import { cn } from '~/lib/utils';
-import { MatrixGrid } from './MatrixGrid';
-import type { DashboardData } from '~/server/functions/activities';
 import type { VaultSlot } from '~/db/types';
+import { cn } from '~/lib/utils';
+import type { DashboardData } from '~/server/functions/activities';
+import { MatrixGrid } from './MatrixGrid';
+import { VAULT_THRESHOLDS } from './constants';
 
 type Character = DashboardData['characters'][number];
 
@@ -21,48 +22,68 @@ interface VaultSectionProps {
   onToggleCollapse: (id: string) => void;
 }
 
-type VaultField = 'vaultDungeonProgress' | 'vaultRaidProgress' | 'vaultWorldProgress';
+type VaultField =
+  | 'vaultDungeonProgress'
+  | 'vaultRaidProgress'
+  | 'vaultWorldProgress';
 
-export function VaultSection({ characters, collapsedColumns, onToggleCollapse }: VaultSectionProps) {
+const VAULT_ROWS: Array<{
+  label: string;
+  thresholds: readonly number[];
+  field: VaultField;
+}> = [
+  {
+    label: VAULT_THRESHOLDS.mythicPlus.label,
+    thresholds: VAULT_THRESHOLDS.mythicPlus.thresholds,
+    field: 'vaultDungeonProgress',
+  },
+  {
+    label: VAULT_THRESHOLDS.raid.label,
+    thresholds: VAULT_THRESHOLDS.raid.thresholds,
+    field: 'vaultRaidProgress',
+  },
+  {
+    label: VAULT_THRESHOLDS.world.label,
+    thresholds: VAULT_THRESHOLDS.world.thresholds,
+    field: 'vaultWorldProgress',
+  },
+];
+
+export function VaultSection({
+  characters,
+  collapsedColumns,
+  onToggleCollapse,
+}: VaultSectionProps) {
   return (
-    <Card>
-      <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Great Vault</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <MatrixGrid
-          characters={characters}
-          collapsedColumns={collapsedColumns}
-          onToggleCollapse={onToggleCollapse}
-        >
-          {({ characters, isCollapsed }) => (
-            <>
-              <VaultRow
-                label="M+"
-                thresholds={[1, 4, 8]}
-                characters={characters}
-                field="vaultDungeonProgress"
-                isCollapsed={isCollapsed}
-              />
-              <VaultRow
-                label="Raid"
-                thresholds={[2, 4, 6]}
-                characters={characters}
-                field="vaultRaidProgress"
-                isCollapsed={isCollapsed}
-              />
-              <VaultRow
-                label="World"
-                thresholds={[2, 4, 8]}
-                characters={characters}
-                field="vaultWorldProgress"
-                isCollapsed={isCollapsed}
-              />
-            </>
-          )}
-        </MatrixGrid>
-      </CardContent>
-    </Card>
+    <TooltipProvider>
+      <Card>
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-sm">Great Vault</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <MatrixGrid
+            characters={characters}
+            collapsedColumns={collapsedColumns}
+            onToggleCollapse={onToggleCollapse}
+          >
+            {({ characters, isCollapsed }) => (
+              <>
+                {VAULT_ROWS.map((row) => (
+                  <VaultRow
+                    key={row.field}
+                    label={row.label}
+                    thresholds={row.thresholds}
+                    characters={characters}
+                    field={row.field}
+                    isCollapsed={isCollapsed}
+                  />
+                ))}
+              </>
+            )}
+          </MatrixGrid>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
 
@@ -74,7 +95,7 @@ function VaultRow({
   isCollapsed,
 }: {
   label: string;
-  thresholds: number[];
+  thresholds: readonly number[];
   characters: Character[];
   field: VaultField;
   isCollapsed: (id: number) => boolean;
@@ -86,7 +107,10 @@ function VaultRow({
         if (isCollapsed(char.id)) {
           return <td key={char.id} className="w-8" />;
         }
-        const slots = char.weeklyActivities?.[0]?.[field] as VaultSlot[] | null | undefined;
+        const slots = char.weeklyActivities?.[0]?.[field] as
+          | VaultSlot[]
+          | null
+          | undefined;
         return (
           <td key={char.id} className="p-0.5 text-center">
             <VaultDots slots={slots ?? null} thresholds={thresholds} />
@@ -102,33 +126,37 @@ function VaultDots({
   thresholds,
 }: {
   slots: VaultSlot[] | null;
-  thresholds: number[];
+  thresholds: readonly number[];
 }) {
   return (
-    <TooltipProvider>
-      <div className="flex gap-0.5 items-center justify-center">
-        {thresholds.map((_, i) => {
-          const slot = slots?.[i];
-          const filled = slot != null && slot.progress >= slot.threshold;
-          const tooltipText = slot
-            ? `${slot.progress}/${slot.threshold} \u2014 ilvl ${slot.itemLevel}`
-            : 'Not started';
-          return (
-            <Tooltip key={i}>
-              <TooltipTrigger asChild>
-                <div
-                  tabIndex={0}
-                  className={cn(
-                    'h-2.5 w-2.5 rounded-full',
-                    filled ? 'bg-emerald-500' : 'bg-zinc-700',
-                  )}
-                />
-              </TooltipTrigger>
-              <TooltipContent>{tooltipText}</TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </div>
-    </TooltipProvider>
+    <div className="flex gap-0.5 items-center justify-center">
+      {thresholds.map((threshold, i) => {
+        const slot = slots?.[i];
+        const filled = slot != null && slot.progress >= slot.threshold;
+        const displayLevel =
+          slot?.itemLevel && slot.itemLevel > 0
+            ? slot.itemLevel
+            : slot?.level && slot.level > 0
+              ? slot.level
+              : null;
+        const tooltipText = slot
+          ? `${slot.progress}/${slot.threshold}${displayLevel != null ? ` \u2014 ilvl ${displayLevel}` : ''}`
+          : `0/${threshold}`;
+        return (
+          <Tooltip key={`slot-${threshold}`}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'h-2.5 w-2.5 rounded-full cursor-default',
+                  filled ? 'bg-emerald-500' : 'bg-zinc-700',
+                )}
+              />
+            </TooltipTrigger>
+            <TooltipContent>{tooltipText}</TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </div>
   );
 }

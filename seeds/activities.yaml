@@ -100,35 +100,35 @@ activities:
     short_name: Adv
     category: weekly
     reset_type: weekly
-    metadata: { source: currency_api, currency_id: 3383, weekly_cap: 100 }
+    metadata: { source: currency_api, currency_id: 3383, weekly_cap: 200 }
 
   - key: dawncrest_veteran
     name: Veteran Dawncrest
     short_name: Vet
     category: weekly
     reset_type: weekly
-    metadata: { source: currency_api, currency_id: 3341, weekly_cap: 100 }
+    metadata: { source: currency_api, currency_id: 3341, weekly_cap: 200 }
 
   - key: dawncrest_champion
     name: Champion Dawncrest
     short_name: Champ
     category: weekly
     reset_type: weekly
-    metadata: { source: currency_api, currency_id: 3343, weekly_cap: 100 }
+    metadata: { source: currency_api, currency_id: 3343, weekly_cap: 200 }
 
   - key: dawncrest_hero
     name: Hero Dawncrest
     short_name: Hero
     category: weekly
     reset_type: weekly
-    metadata: { source: currency_api, currency_id: 3345, weekly_cap: 100 }
+    metadata: { source: currency_api, currency_id: 3345, weekly_cap: 200 }
 
   - key: dawncrest_myth
     name: Myth Dawncrest
     short_name: Myth
     category: weekly
     reset_type: weekly
-    metadata: { source: currency_api, currency_id: 3348, weekly_cap: 100 }
+    metadata: { source: currency_api, currency_id: 3348, weekly_cap: 200 }
 
   # === DAILY ===
   - key: bountiful_delves
@@ -140,26 +140,47 @@ activities:
     metadata: { track_count: true, daily_limit: 4 }
 
   # === RAID LOCKOUTS ===
-  - key: lockout_voidspire
-    name: Voidspire
-    short_name: Voidspire
+  - key: lockout_windrunner_spire
+    name: Windrunner Spire
+    short_name: Windrunner
     category: weekly
     reset_type: weekly
-    metadata: { source: lockout_api, instance_id: 16340, boss_count: 6, difficulties: [normal, heroic, mythic] }
+    metadata: { source: lockout_api, instance_id: 1299, boss_count: 4, difficulties: [normal, heroic, mythic] }
 
-  - key: lockout_dreamrift
-    name: Dreamrift
-    short_name: Dreamrift
+  - key: lockout_magisters_terrace
+    name: "Magisters' Terrace"
+    short_name: "Magisters'"
     category: weekly
     reset_type: weekly
-    metadata: { source: lockout_api, instance_id: 16531, boss_count: 1, difficulties: [normal, heroic, mythic] }
+    metadata: { source: lockout_api, instance_id: 1300, boss_count: 4, difficulties: [normal, heroic, mythic] }
 
-  - key: lockout_quel_danas
-    name: "March on Quel'Danes"
-    short_name: "Quel'Danes"
+  - key: lockout_murder_row
+    name: Murder Row
+    short_name: Murder Row
     category: weekly
     reset_type: weekly
-    metadata: { source: lockout_api, instance_id: 16215, boss_count: 2, difficulties: [normal, heroic, mythic] }
+    metadata: { source: lockout_api, instance_id: 1304, boss_count: 4, difficulties: [normal, heroic, mythic] }
+
+  - key: lockout_blinding_vale
+    name: The Blinding Vale
+    short_name: Blinding Vale
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 1309, boss_count: 4, difficulties: [normal, heroic, mythic] }
+
+  - key: lockout_den_of_nalorakk
+    name: Den of Nalorakk
+    short_name: Nalorakk
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 1311, boss_count: 3, difficulties: [normal, heroic, mythic] }
+
+  - key: lockout_maisara_caverns
+    name: Maisara Caverns
+    short_name: Maisara
+    category: weekly
+    reset_type: weekly
+    metadata: { source: lockout_api, instance_id: 1315, boss_count: 3, difficulties: [normal, heroic, mythic] }
 
 # === RENOWN FACTIONS (reference data, not seeded by src/db/seed.ts) ===
 renown:
