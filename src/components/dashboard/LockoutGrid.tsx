@@ -3,7 +3,7 @@ import type { Lockout } from '~/db/types';
 import type { DashboardData } from '~/server/functions/activities';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
-import { DIFFICULTIES, DIFF_SHORT, RAIDS } from './constants';
+import { DIFFICULTIES, DIFF_SHORT, MYTHIC_DUNGEONS } from './constants';
 
 type Character = DashboardData['characters'][number];
 
@@ -18,8 +18,8 @@ export function LockoutGrid({
   collapsedColumns,
   onToggleCollapse,
 }: LockoutGridProps) {
-  const rows = RAIDS.flatMap((raid) =>
-    DIFFICULTIES.map((diff) => ({ raid, difficulty: diff })),
+  const rows = MYTHIC_DUNGEONS.flatMap((dungeon) =>
+    DIFFICULTIES.map((diff) => ({ dungeon, difficulty: diff })),
   );
 
   const activeRows = rows.filter((row) =>
@@ -30,7 +30,7 @@ export function LockoutGrid({
         | undefined;
       return lockouts?.some(
         (l) =>
-          l.instanceId === row.raid.instanceId &&
+          l.instanceId === row.dungeon.instanceId &&
           l.difficulty === row.difficulty &&
           l.bossesKilled > 0,
       );
@@ -42,7 +42,7 @@ export function LockoutGrid({
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Raid Lockouts</CardTitle>
+        <CardTitle className="text-sm">Mythic Dungeons</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <MatrixGrid
@@ -53,9 +53,9 @@ export function LockoutGrid({
           {({ characters, isCollapsed }) => (
             <>
               {activeRows.map((row) => (
-                <tr key={`${row.raid.instanceId}-${row.difficulty}`}>
+                <tr key={`${row.dungeon.instanceId}-${row.difficulty}`}>
                   <td className="sticky left-0 z-10 bg-card p-2 text-sm">
-                    {row.raid.name} ({DIFF_SHORT[row.difficulty]})
+                    {row.dungeon.name} ({DIFF_SHORT[row.difficulty]})
                   </td>
                   {characters.map((char) => {
                     const lockouts = char.weeklyActivities?.[0]?.lockouts as
@@ -64,11 +64,11 @@ export function LockoutGrid({
                       | undefined;
                     const lockout = lockouts?.find(
                       (l) =>
-                        l.instanceId === row.raid.instanceId &&
+                        l.instanceId === row.dungeon.instanceId &&
                         l.difficulty === row.difficulty,
                     );
                     const killed = lockout?.bossesKilled ?? 0;
-                    const total = lockout?.bossCount ?? row.raid.bosses;
+                    const total = lockout?.bossCount ?? row.dungeon.bosses;
                     const state = !lockout
                       ? ('not-started' as const)
                       : killed === total
@@ -79,7 +79,7 @@ export function LockoutGrid({
                         key={char.id}
                         state={state}
                         label={lockout ? `${killed}/${total}` : undefined}
-                        tooltip={`${char.name}: ${row.raid.name} ${DIFF_SHORT[row.difficulty]} \u2014 ${killed}/${total}`}
+                        tooltip={`${char.name}: ${row.dungeon.name} ${DIFF_SHORT[row.difficulty]} \u2014 ${killed}/${total}`}
                         collapsed={isCollapsed(char.id)}
                       />
                     );

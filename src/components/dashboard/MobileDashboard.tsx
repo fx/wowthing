@@ -8,7 +8,7 @@ import {
   DIFFICULTIES,
   DIFF_SHORT,
   MIDNIGHT_FACTIONS,
-  RAIDS,
+  MYTHIC_DUNGEONS,
 } from './constants';
 
 type Character = DashboardData['characters'][number];
@@ -308,8 +308,8 @@ function MobileRenownCard({ renown }: { renown: DashboardData['renown'] }) {
 }
 
 function MobileLockoutCard({ characters }: { characters: Character[] }) {
-  const rows = RAIDS.flatMap((raid) =>
-    DIFFICULTIES.map((diff) => ({ raid, difficulty: diff })),
+  const rows = MYTHIC_DUNGEONS.flatMap((dungeon) =>
+    DIFFICULTIES.map((diff) => ({ dungeon, difficulty: diff })),
   );
 
   const activeRows = rows.filter((row) =>
@@ -317,7 +317,7 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
       const lockouts = char.weeklyActivities?.[0]?.lockouts;
       return lockouts?.some(
         (l) =>
-          l.instanceId === row.raid.instanceId &&
+          l.instanceId === row.dungeon.instanceId &&
           l.difficulty === row.difficulty &&
           l.bossesKilled > 0,
       );
@@ -329,26 +329,26 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Raid Lockouts</CardTitle>
+        <CardTitle className="text-sm">Mythic Dungeons</CardTitle>
       </CardHeader>
       <CardContent className="px-3 pb-2">
         {activeRows.map((row) => (
           <div
-            key={`${row.raid.instanceId}-${row.difficulty}`}
+            key={`${row.dungeon.instanceId}-${row.difficulty}`}
             className="mb-2 last:mb-0"
           >
             <div className="text-xs text-muted-foreground mb-1">
-              {row.raid.name} ({DIFF_SHORT[row.difficulty]})
+              {row.dungeon.name} ({DIFF_SHORT[row.difficulty]})
             </div>
             {characters.map((char) => {
               const lockouts = char.weeklyActivities?.[0]?.lockouts;
               const lockout = lockouts?.find(
                 (l) =>
-                  l.instanceId === row.raid.instanceId &&
+                  l.instanceId === row.dungeon.instanceId &&
                   l.difficulty === row.difficulty,
               );
               const killed = lockout?.bossesKilled ?? 0;
-              const total = lockout?.bossCount ?? row.raid.bosses;
+              const total = lockout?.bossCount ?? row.dungeon.bosses;
               return (
                 <MobileCharacterRow key={char.id} character={char}>
                   <span

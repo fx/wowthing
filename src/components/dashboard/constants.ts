@@ -1,4 +1,4 @@
-export const RAIDS = [
+export const MYTHIC_DUNGEONS = [
   { instanceId: 1299, name: 'Windrunner Spire', bosses: 4 },
   { instanceId: 1300, name: "Magisters' Terrace", bosses: 4 },
   { instanceId: 1304, name: 'Murder Row', bosses: 4 },
