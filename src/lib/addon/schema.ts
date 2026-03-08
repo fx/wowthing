@@ -85,13 +85,16 @@ const lockoutSchema = z.object({
   bosses: z.array(z.string()).optional(),
 });
 
-const vaultSlotSchema = z.object({
-  threshold: z.number(),
-  progress: z.number(),
-  level: z.number().optional(),
-  tier: z.number().optional(),
-  rewards: z.any().optional(),
-});
+const vaultSlotSchema = z.union([
+  z.object({
+    threshold: z.number(),
+    progress: z.number(),
+    level: z.number().optional(),
+    tier: z.number().optional(),
+    rewards: z.any().optional(),
+  }),
+  z.array(z.number()),
+]);
 
 const uploadCharacterSchema = z.object({
   level: z.number().optional(),
