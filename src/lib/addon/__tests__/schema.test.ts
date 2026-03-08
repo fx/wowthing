@@ -180,4 +180,64 @@ describe('uploadSchema', () => {
       uploadSchema.parse({ version: 1, chars: 'not-an-object' }),
     ).toThrow();
   });
+
+  it('accepts extra top-level fields via passthrough', () => {
+    const input = {
+      version: 1,
+      chars: {},
+      guilds: { '100': { name: 'Test Guild' } },
+      toys: [123, 456],
+      battlePets: { '1': { species: 42 } },
+    };
+    const result = uploadSchema.parse(input);
+    expect(result.version).toBe(1);
+    expect(result.guilds).toEqual({ '100': { name: 'Test Guild' } });
+    expect(result.toys).toEqual([123, 456]);
+    expect(result.battlePets).toEqual({ '1': { species: 42 } });
+  });
+
+  it('accepts extra character fields via passthrough', () => {
+    const input = {
+      version: 1,
+      chars: {
+        '12345': {
+          level: 90,
+          houses: [{ id: 1, name: 'Cozy Cottage' }],
+          decor: { placed: 5, total: 20 },
+          reputation: { '2503': 42000 },
+        },
+      },
+    };
+    const result = uploadSchema.parse(input);
+    const char = result.chars['12345'];
+    expect(char.level).toBe(90);
+    expect(char.houses).toEqual([{ id: 1, name: 'Cozy Cottage' }]);
+    expect(char.decor).toEqual({ placed: 5, total: 20 });
+    expect(char.reputation).toEqual({ '2503': 42000 });
+  });
+
+  it('preserves passthrough data alongside validated fields', () => {
+    const input = {
+      version: 2,
+      chars: {
+        '99': {
+          level: 80,
+          copper: 5000,
+          extraField: 'should survive',
+          currencies: {
+            '3383': '10:100:0:0:0:0:0',
+          },
+        },
+      },
+      scanTimes: { global: 1710000000 },
+    };
+    const result = uploadSchema.parse(input);
+    expect(result.version).toBe(2);
+    expect(result.scanTimes).toEqual({ global: 1710000000 });
+    const char = result.chars['99'];
+    expect(char.level).toBe(80);
+    expect(char.copper).toBe(5000);
+    expect(char.extraField).toBe('should survive');
+    expect(char.currencies!['3383'].quantity).toBe(10);
+  });
 });
