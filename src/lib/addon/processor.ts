@@ -188,7 +188,7 @@ async function processCharacterQuests(
 
   // Account-wide quests from questsV2 — store as weekly completions
   if (questsV2) {
-    const questIds = Object.keys(questsV2).map((id) => Number.parseInt(id));
+    const questIds = Object.keys(questsV2).map((k) => parseInt(k, 10)).filter((id) => Number.isFinite(id));
     if (questIds.length > 0) {
       const existingAccountQuests = await db
         .select({ questId: questCompletions.questId })

@@ -300,15 +300,31 @@ describe('processor logic', () => {
       };
       const knownWeeklyQuestIds = [93890, 93767, 94457];
       const completedWeeklies = Object.keys(questsV2)
-        .map((id) => Number.parseInt(id))
+        .map((k) => parseInt(k, 10))
+        .filter((id) => Number.isFinite(id))
         .filter((id) => knownWeeklyQuestIds.includes(id));
       expect(completedWeeklies).toEqual([93890]);
     });
 
     it('handles empty questsV2', () => {
       const questsV2: Record<string, number> = {};
-      const questIds = Object.keys(questsV2).map((id) => Number.parseInt(id));
+      const questIds = Object.keys(questsV2)
+        .map((k) => parseInt(k, 10))
+        .filter((id) => Number.isFinite(id));
       expect(questIds).toHaveLength(0);
+    });
+
+    it('filters out NaN from non-numeric questsV2 keys', () => {
+      const questsV2: Record<string, number> = {
+        '93890': 1,
+        'abc': 1,
+        '': 1,
+        '93751': 1,
+      };
+      const questIds = Object.keys(questsV2)
+        .map((k) => parseInt(k, 10))
+        .filter((id) => Number.isFinite(id));
+      expect(questIds).toEqual([93890, 93751]);
     });
   });
 });
