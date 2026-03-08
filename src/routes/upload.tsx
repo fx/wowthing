@@ -1,10 +1,11 @@
 import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useState, useCallback, useRef } from 'react';
 import { Button, Card, CardContent } from '@fx/ui';
-import { uploadAddonData } from '~/server/functions/upload';
+import { checkUploadAuth, uploadAddonData } from '~/server/functions/upload';
 import { cn } from '~/lib/utils';
 
 export const Route = createFileRoute('/upload')({
+  loader: () => checkUploadAuth(),
   component: UploadPage,
 });
 

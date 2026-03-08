@@ -35,8 +35,8 @@ describe('parseAddonUpload', () => {
     expect(errorSpy).toHaveBeenCalledWith(
       '[upload] luaToJson failed:',
       expect.stringContaining('No opening brace'),
-      '| input preview:',
-      expect.stringContaining('this is not lua'),
+      '| input length:',
+      22,
     );
   });
 
@@ -81,15 +81,14 @@ describe('parseAddonUpload', () => {
     );
   });
 
-  it('truncates input preview to 200 chars in luaToJson error log', () => {
+  it('logs input length instead of raw content in luaToJson error log', () => {
     const longInput = 'x'.repeat(500);
     expect(() => parseAddonUpload(longInput)).toThrow();
     expect(errorSpy).toHaveBeenCalledTimes(1);
     const call = errorSpy.mock.calls[0];
-    // call args: '[upload] luaToJson failed:', message, '| input preview:', preview
+    // call args: '[upload] luaToJson failed:', message, '| input length:', length
     expect(call[0]).toBe('[upload] luaToJson failed:');
-    const previewArg = call[3] as string;
-    expect(previewArg).toHaveLength(200);
-    expect(previewArg).toBe('x'.repeat(200));
+    expect(call[2]).toBe('| input length:');
+    expect(call[3]).toBe(500);
   });
 });

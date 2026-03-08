@@ -21,8 +21,8 @@ export function parseAddonUpload(luaText: string): AddonUpload {
     console.error(
       '[upload] luaToJson failed:',
       err instanceof Error ? err.message : err,
-      '| input preview:',
-      luaText.slice(0, 200),
+      '| input length:',
+      luaText.length,
     );
     throw err;
   }
@@ -34,8 +34,8 @@ export function parseAddonUpload(luaText: string): AddonUpload {
     console.error(
       '[upload] JSON.parse failed:',
       err instanceof Error ? err.message : err,
-      '| json preview:',
-      json.slice(0, 200),
+      '| json length:',
+      json.length,
     );
     throw err;
   }
@@ -56,6 +56,12 @@ export function parseAddonUpload(luaText: string): AddonUpload {
     throw err;
   }
 }
+
+export const checkUploadAuth = createServerFn({ method: 'GET' })
+  .middleware([authMiddleware])
+  .handler(async () => {
+    return { ok: true };
+  });
 
 export const uploadAddonData = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
