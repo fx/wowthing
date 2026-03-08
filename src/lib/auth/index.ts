@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/db';
 import { user as betterAuthUser, users } from '~/db/schema';
 import { encrypt } from '~/lib/auth/encryption';
-import { getBoss } from '~/server/plugins/pg-boss';
+import { getBossAsync } from '~/server/plugins/pg-boss';
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
@@ -72,7 +72,7 @@ export const auth = betterAuth({
 
           // Queue a sync job for the new user
           try {
-            const boss = getBoss();
+            const boss = await getBossAsync();
             await boss.send(
               'sync-user-profile',
               {

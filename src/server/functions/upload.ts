@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authMiddleware } from '~/lib/auth/middleware';
 import { luaToJson } from '~/lib/addon/lua-parser';
 import { uploadSchema } from '~/lib/addon/schema';
-import { getBoss } from '~/server/plugins/pg-boss';
+import { getBossAsync } from '~/server/plugins/pg-boss';
 
 const uploadInputSchema = z.object({
   luaText: z.string(),
@@ -22,7 +22,7 @@ export const uploadAddonData = createServerFn({ method: 'POST' })
     const json = luaToJson(luaText);
     const parsed = uploadSchema.parse(JSON.parse(json));
 
-    const boss = getBoss();
+    const boss = await getBossAsync();
     await boss.send(
       'process-addon-upload',
       {

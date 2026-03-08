@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/db';
 import { users } from '~/db/schema';
 import { authMiddleware } from '~/lib/auth/middleware';
-import { getBoss } from '~/server/plugins/pg-boss';
+import { getBossAsync } from '~/server/plugins/pg-boss';
 
 export const triggerSync = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -21,7 +21,7 @@ export const triggerSync = createServerFn({ method: 'POST' })
       throw new Error('User not found');
     }
 
-    const boss = getBoss();
+    const boss = await getBossAsync();
     await boss.send(
       'sync-user-profile',
       {

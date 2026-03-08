@@ -24,10 +24,14 @@ export type JobRegistry = {
 };
 
 let bossInstance: PgBoss | null = null;
+let startPromise: Promise<PgBoss> | null = null;
 
-export function getBoss(): PgBoss {
-  if (!bossInstance) throw new Error('pg-boss not initialized');
-  return bossInstance;
+export async function getBossAsync(): Promise<PgBoss> {
+  if (bossInstance) return bossInstance;
+  if (!startPromise) {
+    startPromise = startBoss();
+  }
+  return startPromise;
 }
 
 export async function startBoss(): Promise<PgBoss> {
