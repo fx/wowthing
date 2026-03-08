@@ -325,7 +325,7 @@ describe('processor logic', () => {
       const questIds = Object.keys(questsV2)
         .map((k) => parseInt(k, 10))
         .filter((id) => Number.isFinite(id));
-      expect(questIds).toEqual([93890, 93751]);
+      expect(questIds.sort()).toEqual([93751, 93890]);
     });
 
     it('only includes allowlisted quest IDs from questsV2', () => {
@@ -339,7 +339,7 @@ describe('processor logic', () => {
         .map((k) => parseInt(k, 10))
         .filter((id) => Number.isFinite(id))
         .filter((id) => WEEKLY_QUEST_IDS.has(id));
-      expect(questIds).toEqual([93890, 93751]);
+      expect(questIds.sort()).toEqual([93751, 93890]);
     });
 
     it('WEEKLY_QUEST_IDS contains known quest IDs from seeds', () => {
