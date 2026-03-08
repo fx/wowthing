@@ -95,7 +95,7 @@ async function processCharacterCurrencies(
         ? parsed.weekQuantity
         : null;
     const weekMax = isMovingMax
-      ? parsed.max || 200
+      ? parsed.max > 0 ? parsed.max : 200
       : parsed.isWeekly
         ? parsed.weekMax
         : null;
