@@ -1,5 +1,6 @@
 import { createMiddleware } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
+import { redirect } from '@tanstack/react-router';
 import { eq } from 'drizzle-orm';
 import { db } from '~/db';
 import { users } from '~/db/schema';
@@ -14,10 +15,7 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(
     });
 
     if (!session) {
-      throw new Response(null, {
-        status: 302,
-        headers: { Location: '/login' },
-      });
+      throw redirect({ to: '/login' });
     }
 
     // Resolve the app user by Better Auth user ID
@@ -26,10 +24,7 @@ export const authMiddleware = createMiddleware({ type: 'function' }).server(
     });
 
     if (!appUser) {
-      throw new Response(null, {
-        status: 302,
-        headers: { Location: '/login' },
-      });
+      throw redirect({ to: '/login' });
     }
 
     return next({
