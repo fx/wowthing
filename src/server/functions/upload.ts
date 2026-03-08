@@ -1,8 +1,11 @@
 import { createServerFn } from '@tanstack/react-start';
+import { eq } from 'drizzle-orm';
 import { z, ZodError } from 'zod';
-import { authMiddleware } from '~/lib/auth/middleware';
+import { db } from '~/db';
+import { addonUploads } from '~/db/schema';
 import { luaToJson } from '~/lib/addon/lua-parser';
 import { type AddonUpload, uploadSchema } from '~/lib/addon/schema';
+import { authMiddleware } from '~/lib/auth/middleware';
 import { getBossAsync } from '~/server/plugins/pg-boss';
 
 const uploadInputSchema = z.object({
@@ -73,20 +76,55 @@ export const uploadAddonData = createServerFn({ method: 'POST' })
       throw new Error('Invalid user id');
     }
 
-    const parsed = parseAddonUpload(luaText);
-
-    const boss = await getBossAsync();
-    await boss.send(
-      'process-addon-upload',
-      {
+    // Store raw upload
+    const [upload] = await db
+      .insert(addonUploads)
+      .values({
         userId,
-        upload: parsed,
-      },
-      {
-        singletonKey: `upload-${userId}`,
-        expireInMinutes: 10,
-      },
-    );
+        rawLua: luaText,
+        byteSize: new TextEncoder().encode(luaText).byteLength,
+      })
+      .returning({ id: addonUploads.id });
 
-    return { success: true, characterCount: Object.keys(parsed.chars).length };
+    try {
+      const parsed = parseAddonUpload(luaText);
+      const charCount = Object.keys(parsed.chars).length;
+
+      // Mark as processed
+      await db
+        .update(addonUploads)
+        .set({
+          status: 'processed',
+          characterCount: charCount,
+          processedAt: new Date(),
+        })
+        .where(eq(addonUploads.id, upload.id));
+
+      const boss = await getBossAsync();
+      await boss.send(
+        'process-addon-upload',
+        {
+          userId,
+          uploadId: upload.id,
+          upload: parsed,
+        },
+        {
+          singletonKey: `upload-${userId}`,
+          expireInMinutes: 10,
+        },
+      );
+
+      return { success: true, characterCount: charCount };
+    } catch (err) {
+      // Mark as failed
+      await db
+        .update(addonUploads)
+        .set({
+          status: 'failed',
+          errorMessage: err instanceof Error ? err.message : String(err),
+        })
+        .where(eq(addonUploads.id, upload.id));
+
+      throw err;
+    }
   });

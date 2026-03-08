@@ -280,10 +280,30 @@ export const syncState = pgTable(
   ],
 );
 
+// === Addon Uploads ===
+export const addonUploads = pgTable(
+  'addon_uploads',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    rawLua: text('raw_lua').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    status: text('status').notNull().default('pending'), // 'pending' | 'processed' | 'failed'
+    errorMessage: text('error_message'),
+    characterCount: integer('character_count'),
+    createdAt: timestamp('created_at', tz).defaultNow().notNull(),
+    processedAt: timestamp('processed_at', tz),
+  },
+  (t) => [index('idx_addon_uploads_user').on(t.userId)],
+);
+
 // === Relations ===
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   renown: many(renown),
+  addonUploads: many(addonUploads),
 }));
 
 export const accountsRelations = relations(accounts, ({ one, many }) => ({
@@ -328,5 +348,12 @@ export const currenciesRelations = relations(currencies, ({ one }) => ({
   character: one(characters, {
     fields: [currencies.characterId],
     references: [characters.id],
+  }),
+}));
+
+export const addonUploadsRelations = relations(addonUploads, ({ one }) => ({
+  user: one(users, {
+    fields: [addonUploads.userId],
+    references: [users.id],
   }),
 }));
