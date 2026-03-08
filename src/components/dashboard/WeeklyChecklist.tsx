@@ -22,15 +22,33 @@ interface WeeklyChecklistProps {
   onToggleCollapse: (id: string) => void;
 }
 
-/** Rows to display in the weekly objectives grid */
+/** All rows in the weekly chores grid, derived from ChoreTracker Midnight definitions */
 const WEEKLY_ROWS = [
+  { key: 'unity', label: 'Unity', tooltip: 'Midnight Unity pillars (13 total)' },
+  { key: 'abundance', label: 'Abundance', tooltip: 'Abundant Offerings weekly' },
+  { key: 'soiree', label: 'Soiree', tooltip: "Saltheril's Soiree runestone quests (4 total)" },
+  { key: 'stormarion', label: 'Stormarion', tooltip: 'Stormarion Assault weekly' },
+  { key: 'special_assignments', label: 'SA', tooltip: 'Special Assignments (2 active per week)' },
   { key: 'prey_hard', label: 'Prey (Hard)', tooltip: 'Hard prey hunts — first 2 reward a chest (4/week max)' },
   { key: 'prey_normal', label: 'Prey (Normal)', tooltip: 'Normal prey hunts (4/week max)' },
   { key: 'prey_nightmare', label: 'Prey (NM)', tooltip: 'Nightmare prey hunts (4/week max)' },
-  { key: 'special_assignments', label: 'SA', tooltip: 'Special Assignments' },
-  { key: 'dungeon_weeklies', label: 'Dungeon', tooltip: 'Dungeon weekly quests' },
+  { key: 'dungeon_weeklies', label: 'Dungeons', tooltip: 'Dungeon weekly quests (8 account-wide)' },
   { key: 'delves', label: 'Delves', tooltip: 'Delve completion quests' },
 ] as const;
+
+function getWp(char: Character): WeeklyProgress | null {
+  return (char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined) ?? null;
+}
+
+function countUnity(wp: WeeklyProgress): number {
+  if (!wp.unity) return 0;
+  return Object.values(wp.unity).filter(Boolean).length;
+}
+
+function countSoiree(wp: WeeklyProgress): number {
+  if (!wp.soiree) return 0;
+  return Object.values(wp.soiree).filter(Boolean).length;
+}
 
 export function WeeklyChecklist({
   characters,
@@ -40,15 +58,19 @@ export function WeeklyChecklist({
   // Only show rows where at least one character has data
   const activeRows = WEEKLY_ROWS.filter((row) =>
     characters.some((char) => {
-      const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
+      const wp = getWp(char);
       if (!wp) return false;
       switch (row.key) {
+        case 'unity': return countUnity(wp) > 0;
+        case 'abundance': return wp.abundance;
+        case 'soiree': return countSoiree(wp) > 0;
+        case 'stormarion': return wp.stormarion;
         case 'prey_normal': return (wp.prey?.normal ?? 0) > 0;
         case 'prey_hard': return (wp.prey?.hard ?? 0) > 0;
         case 'prey_nightmare': return (wp.prey?.nightmare ?? 0) > 0;
-        case 'special_assignments': return wp.specialAssignments.length > 0;
-        case 'dungeon_weeklies': return wp.dungeonWeeklies.length > 0;
-        case 'delves': return wp.delves.length > 0;
+        case 'special_assignments': return (wp.specialAssignments?.length ?? 0) > 0;
+        case 'dungeon_weeklies': return (wp.dungeonWeeklies?.length ?? 0) > 0;
+        case 'delves': return (wp.delves?.length ?? 0) > 0;
         default: return false;
       }
     }),
@@ -59,7 +81,7 @@ export function WeeklyChecklist({
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Weekly Objectives</CardTitle>
+        <CardTitle className="text-sm">Weekly Chores</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <MatrixGrid
@@ -82,10 +104,7 @@ export function WeeklyChecklist({
                     </TooltipProvider>
                   </td>
                   {characters.map((char) => {
-                    const { state, label, tooltip } = resolveRowStatus(
-                      char,
-                      row.key,
-                    );
+                    const { state, label, tooltip } = resolveRowStatus(char, row.key);
                     return (
                       <StatusCell
                         key={char.id}
@@ -106,31 +125,84 @@ export function WeeklyChecklist({
   );
 }
 
-function resolvePreyStatus(
-  count: number,
-): { state: ActivityState; label: string; tooltip: string } {
-  const state: ActivityState =
-    count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
-  return {
-    state,
-    label: `${count}/4`,
-    tooltip: `${count}/4 completed this week`,
-  };
+function resolvePreyStatus(count: number): { state: ActivityState; label: string; tooltip: string } {
+  const state: ActivityState = count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+  return { state, label: `${count}/4`, tooltip: `${count}/4 completed this week` };
 }
+
+function boolState(done: boolean): ActivityState {
+  return done ? 'complete' : 'not-started';
+}
+
+const UNITY_LABELS: Record<string, string> = {
+  abundance: 'Abundance',
+  arcantina: 'Arcantina',
+  battlegrounds: 'Battlegrounds',
+  delves: 'Delves',
+  dungeons: 'Dungeons',
+  housing: 'Housing',
+  haranir: 'Haranir',
+  prey: 'Prey',
+  raid: 'Raid',
+  soiree: 'Soiree',
+  stormarion: 'Stormarion',
+  worldBoss: 'World Boss',
+  worldQuests: 'World Quests',
+};
+
+const SOIREE_LABELS: Record<string, string> = {
+  magisters: 'Magisters',
+  bloodKnights: 'Blood Knights',
+  farstriders: 'Farstriders',
+  shades: 'Shades of the Row',
+};
 
 function resolveRowStatus(
   char: Character,
   rowKey: string,
 ): { state: ActivityState; label: string | undefined; tooltip: string } {
-  const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
+  const wp = getWp(char);
 
   switch (rowKey) {
-    case 'prey_normal':
-      return resolvePreyStatus(wp?.prey?.normal ?? 0);
-    case 'prey_hard':
-      return resolvePreyStatus(wp?.prey?.hard ?? 0);
-    case 'prey_nightmare':
-      return resolvePreyStatus(wp?.prey?.nightmare ?? 0);
+    case 'unity': {
+      const count = wp ? countUnity(wp) : 0;
+      const state: ActivityState = count >= 13 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+      const details = wp?.unity
+        ? Object.entries(wp.unity)
+            .map(([k, v]) => `${v ? '\u2713' : '\u2717'} ${UNITY_LABELS[k] ?? k}`)
+            .join('\n')
+        : '';
+      return { state, label: `${count}/13`, tooltip: `Unity Pillars:\n${details}` };
+    }
+
+    case 'abundance':
+      return {
+        state: boolState(wp?.abundance ?? false),
+        label: wp?.abundance ? '\u2713' : undefined,
+        tooltip: 'Abundant Offerings weekly',
+      };
+
+    case 'soiree': {
+      const count = wp ? countSoiree(wp) : 0;
+      const state: ActivityState = count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+      const details = wp?.soiree
+        ? Object.entries(wp.soiree)
+            .map(([k, v]) => `${v ? '\u2713' : '\u2717'} ${SOIREE_LABELS[k] ?? k}`)
+            .join('\n')
+        : '';
+      return { state, label: `${count}/4`, tooltip: `Soiree Runestones:\n${details}` };
+    }
+
+    case 'stormarion':
+      return {
+        state: boolState(wp?.stormarion ?? false),
+        label: wp?.stormarion ? '\u2713' : undefined,
+        tooltip: 'Stormarion Assault weekly',
+      };
+
+    case 'prey_normal': return resolvePreyStatus(wp?.prey?.normal ?? 0);
+    case 'prey_hard': return resolvePreyStatus(wp?.prey?.hard ?? 0);
+    case 'prey_nightmare': return resolvePreyStatus(wp?.prey?.nightmare ?? 0);
 
     case 'special_assignments': {
       const sas = wp?.specialAssignments ?? [];
@@ -152,7 +224,7 @@ function resolveRowStatus(
       return {
         state,
         label: sas.length > 0 ? `${completed}/${sas.length}` : undefined,
-        tooltip: sas.length > 0 ? `Special Assignments:\n${names}` : 'Special Assignments: None active',
+        tooltip: sas.length > 0 ? `Special Assignments:\n${names}` : 'No active SAs',
       };
     }
 
@@ -171,7 +243,7 @@ function resolveRowStatus(
       return {
         state,
         label: dws.length > 0 ? `${completed}/${dws.length}` : undefined,
-        tooltip: dws.length > 0 ? `Dungeon Weeklies:\n${names}` : 'Dungeon Weeklies: None active',
+        tooltip: dws.length > 0 ? `Dungeon Weeklies:\n${names}` : 'No dungeon weeklies',
       };
     }
 
@@ -189,7 +261,7 @@ function resolveRowStatus(
       return {
         state,
         label: dvs.length > 0 ? `${completed}/${dvs.length}` : undefined,
-        tooltip: dvs.length > 0 ? `Delves: ${completed}/${dvs.length} complete` : 'Delves: None active',
+        tooltip: dvs.length > 0 ? `Delves: ${completed}/${dvs.length} complete` : 'No delve quests',
       };
     }
 

@@ -31,29 +31,61 @@ const PREY_NIGHTMARE_IDS = new Set([
   91266, 91267, 91268, 91269,
 ]);
 
-/** SA quest IDs from upstream wowthing-again: assignment + unlock per SA.
- *  Completed SAs are detected via completedQuestsSquish (assignment quest ID). */
+/** Midnight Unity pillar quest IDs (13 total, all binary completion) */
+const UNITY_QUESTS = {
+  abundance: 93890,
+  arcantina: 93767,
+  battlegrounds: 94457,
+  delves: 93909,
+  dungeons: 93911,
+  housing: 93769,
+  haranir: 93891,
+  prey: 93910,
+  raid: 93912,
+  soiree: 93889,
+  stormarion: 93892,
+  worldBoss: 93913,
+  worldQuests: 93766,
+} as const;
+
+/** Midnight non-Unity weekly chore quest IDs */
+const ABUNDANCE_QUEST = 89507;
+const SOIREE_QUESTS = {
+  magisters: 90573,
+  bloodKnights: 90574,
+  farstriders: 90575,
+  shades: 90576,
+} as const;
+const STORMARION_QUEST = 90962;
+
+/** Midnight Special Assignment definitions (pick 2 per week from 8).
+ *  From ChoreTracker: Data/Chores/Midnight.lua */
 const SA_DEFINITIONS: Array<{ name: string; assignment: number; unlock: number }> = [
-  // 11.0 TWW
-  { name: 'A Pound of Cure', assignment: 82414, unlock: 82159 },
-  { name: 'Bombs From Behind', assignment: 82531, unlock: 82161 },
-  { name: 'Cinderbee Surge', assignment: 82355, unlock: 82146 },
-  { name: 'Lynx Rescue', assignment: 82852, unlock: 82158 },
-  { name: 'Rise of the Colossals', assignment: 82787, unlock: 82157 },
-  { name: 'Shadows Below', assignment: 81691, unlock: 82155 },
-  { name: 'Titanic Resurgence', assignment: 81647, unlock: 82154 },
-  { name: 'Titanic Resurgence 2', assignment: 81649, unlock: 83069 },
-  { name: 'Titanic Resurgence 3', assignment: 81650, unlock: 83070 },
-  { name: 'When the Deeps Stir', assignment: 83229, unlock: 82156 },
-  // 11.1 Undermine
-  { name: 'Boom! Headshot!', assignment: 85487, unlock: 85489 },
-  { name: 'Security Detail', assignment: 85488, unlock: 85490 },
-  // 11.2 K'aresh
-  { name: 'Overshadowed', assignment: 89293, unlock: 91193 },
-  { name: 'Aligned Views', assignment: 89294, unlock: 91203 },
+  { name: 'What Remains of a Temple Broken', assignment: 91390, unlock: 94865 },
+  { name: 'Ours Once More!', assignment: 91796, unlock: 94866 },
+  { name: "A Hunter's Regret", assignment: 92063, unlock: 94390 },
+  { name: 'Shade and Claw', assignment: 92139, unlock: 95435 },
+  { name: "The Grand Magister's Drink", assignment: 92145, unlock: 92848 },
+  { name: 'Push Back the Light', assignment: 93013, unlock: 94391 },
+  { name: 'Agents of the Shield', assignment: 93244, unlock: 94795 },
+  { name: 'Precision Excision', assignment: 93438, unlock: 94743 },
 ];
 const SA_ASSIGNMENT_IDS = new Set(SA_DEFINITIONS.map((d) => d.assignment));
 const SA_UNLOCK_TO_DEF = new Map(SA_DEFINITIONS.map((d) => [d.unlock, d]));
+
+/** Midnight dungeon weekly quest IDs (account-wide, 8 total).
+ *  From ChoreTracker: Data/Chores/Midnight.lua */
+const DUNGEON_WEEKLY_QUESTS: Array<{ questId: number; name: string }> = [
+  { questId: 93751, name: 'Windrunner Spire' },
+  { questId: 93752, name: 'Murder Row' },
+  { questId: 93753, name: "Magisters' Terrace" },
+  { questId: 93754, name: 'Maisara Caverns' },
+  { questId: 93755, name: 'Den of Nalorakk' },
+  { questId: 93756, name: 'The Blinding Vale' },
+  { questId: 93757, name: 'Voidscar Arena' },
+  { questId: 93758, name: 'Nexus-Point Xenas' },
+];
+const DUNGEON_WEEKLY_IDS = new Set(DUNGEON_WEEKLY_QUESTS.map((d) => d.questId));
 
 /**
  * Extract blizzardId from addon Player GUID format: "Player-{realmId}-{hexCharId}"
@@ -80,20 +112,19 @@ const DIFFICULTY_MAP: Record<number, Lockout['difficulty']> = {
 /** Dawncrest currency IDs that use isMovingMax tracking */
 const MOVING_MAX_CURRENCY_IDS = new Set([3383, 3341, 3343, 3345, 3348]);
 
-/** Known weekly activity quest IDs from seeds/activities.yaml.
- *  Only these IDs are persisted from questsV2 to avoid bloating
- *  the quest_completions table with thousands of irrelevant quests. */
+/** Known weekly activity quest IDs — persisted from questsV2 to quest_completions.
+ *  All Midnight chore quest IDs from ChoreTracker. */
 export const WEEKLY_QUEST_IDS = new Set([
-  // Unity quests
-  93890, 93767, 94457, 93909, 93911, 93769, 93891, 93910, 93912, 93889, 93892, 93913, 93766,
-  // Hope in the Darkest Corners
+  // Unity quests (13)
+  ...Object.values(UNITY_QUESTS),
+  // Non-Unity weeklies
+  ABUNDANCE_QUEST, ...Object.values(SOIREE_QUESTS), STORMARION_QUEST,
+  // Hope in the Darkest Corners (pre-90)
   95468,
-  // Special assignment quest IDs
-  91390, 91796, 92063, 92139, 92145, 93013, 93244, 93438,
-  // Special assignment unlock quest IDs
-  94865, 94866, 94390, 95435, 92848, 94391, 94795, 94743,
-  // Dungeon weekly
-  93751, 93752, 93753, 93754, 93755, 93756, 93757, 93758,
+  // Special assignment quest IDs + unlock quest IDs
+  ...SA_DEFINITIONS.flatMap((d) => [d.assignment, d.unlock]),
+  // Dungeon weekly quest IDs
+  ...DUNGEON_WEEKLY_QUESTS.map((d) => d.questId),
 ]);
 
 export async function processAddonUpload(
@@ -442,47 +473,94 @@ export function countPreyByDifficulty(
 }
 
 /**
- * Extract categorized weekly progress from progressQuests + completedQuestsSquish.
- * A quest is "completed" when status=2 OR all objectives with need>0 have have>=need.
+ * Extract all Midnight chore completion from completedQuestsSquish + progressQuests.
+ * Uses quest IDs from ChoreTracker addon definitions.
  */
 export function extractWeeklyProgress(
   charData: AddonCharacter,
   completedQuests: Set<number>,
 ): WeeklyProgress {
-  const result: WeeklyProgress = {
-    prey: countPreyByDifficulty(completedQuests, charData),
-    specialAssignments: extractSpecialAssignments(charData, completedQuests),
-    dungeonWeeklies: [],
-    delves: [],
+  const has = (id: number) => completedQuests.has(id);
+
+  // Unity pillars — simple binary quest checks
+  const unity = {
+    abundance: has(UNITY_QUESTS.abundance),
+    arcantina: has(UNITY_QUESTS.arcantina),
+    battlegrounds: has(UNITY_QUESTS.battlegrounds),
+    delves: has(UNITY_QUESTS.delves),
+    dungeons: has(UNITY_QUESTS.dungeons),
+    housing: has(UNITY_QUESTS.housing),
+    haranir: has(UNITY_QUESTS.haranir),
+    prey: has(UNITY_QUESTS.prey),
+    raid: has(UNITY_QUESTS.raid),
+    soiree: has(UNITY_QUESTS.soiree),
+    stormarion: has(UNITY_QUESTS.stormarion),
+    worldBoss: has(UNITY_QUESTS.worldBoss),
+    worldQuests: has(UNITY_QUESTS.worldQuests),
   };
 
-  if (!charData.progressQuests?.length) return result;
+  // Non-Unity weeklies
+  const abundance = has(ABUNDANCE_QUEST);
+  const soiree = {
+    magisters: has(SOIREE_QUESTS.magisters),
+    bloodKnights: has(SOIREE_QUESTS.bloodKnights),
+    farstriders: has(SOIREE_QUESTS.farstriders),
+    shades: has(SOIREE_QUESTS.shades),
+  };
+  const stormarion = has(STORMARION_QUEST);
 
-  for (const pq of charData.progressQuests) {
-    // Skip prey and SA quests — handled separately
-    if (pq.name.startsWith('Prey:')) continue;
-    if (pq.name.startsWith('Special Assignment')) continue;
+  // Dungeon weeklies — check completedQuestsSquish first, then progressQuests
+  const dungeonWeeklies = extractDungeonWeeklies(charData, completedQuests);
 
-    const completed = isQuestCompleted(pq);
+  // Delves from progressQuests
+  const delves: WeeklyProgress['delves'] = [];
+  if (charData.progressQuests) {
+    for (const pq of charData.progressQuests) {
+      if (pq.name.includes('Delver') || pq.name.includes('Delve')) {
+        delves.push({ questId: pq.questId, name: pq.name, completed: isQuestCompleted(pq) });
+      }
+    }
+  }
 
-    if (
-      pq.name.includes('Delver') ||
-      pq.name.includes('Delve')
-    ) {
-      result.delves.push({ questId: pq.questId, name: pq.name, completed });
-    } else if (
-      pq.name.includes('Windrunner Spire:') ||
-      pq.name.includes("Magisters' Terrace:") ||
-      pq.name.includes('Murder Row:') ||
-      pq.name.includes('Blinding Vale:') ||
-      pq.name.includes('Den of Nalorakk:') ||
-      pq.name.includes('Maisara Caverns:')
-    ) {
-      result.dungeonWeeklies.push({
-        questId: pq.questId,
-        name: pq.name,
-        completed,
-      });
+  return {
+    prey: countPreyByDifficulty(completedQuests, charData),
+    unity,
+    abundance,
+    soiree,
+    stormarion,
+    specialAssignments: extractSpecialAssignments(charData, completedQuests),
+    dungeonWeeklies,
+    delves,
+  };
+}
+
+/**
+ * Extract dungeon weekly completion from completedQuestsSquish + progressQuests.
+ * Uses known quest IDs (93751-93758) instead of name matching.
+ */
+function extractDungeonWeeklies(
+  charData: AddonCharacter,
+  completedQuests: Set<number>,
+): WeeklyProgress['dungeonWeeklies'] {
+  const result: WeeklyProgress['dungeonWeeklies'] = [];
+  const handledIds = new Set<number>();
+
+  // 1. Check completedQuestsSquish for turned-in dungeon weeklies
+  for (const dw of DUNGEON_WEEKLY_QUESTS) {
+    if (completedQuests.has(dw.questId)) {
+      result.push({ questId: dw.questId, name: dw.name, completed: true });
+      handledIds.add(dw.questId);
+    }
+  }
+
+  // 2. Check progressQuests for in-progress dungeon weeklies
+  if (charData.progressQuests) {
+    for (const pq of charData.progressQuests) {
+      if (handledIds.has(pq.questId)) continue;
+      if (DUNGEON_WEEKLY_IDS.has(pq.questId)) {
+        result.push({ questId: pq.questId, name: pq.name, completed: isQuestCompleted(pq) });
+        handledIds.add(pq.questId);
+      }
     }
   }
 
@@ -499,63 +577,57 @@ function isQuestCompleted(pq: { status: number; objectives: Array<{ have: number
 }
 
 /**
- * Build SA list from completedQuestsSquish + progressQuests.
- * - Completed SAs: assignment quest ID found in completedQuestsSquish
- * - In-progress SAs: unlock quest in progressQuests with partial objective progress
- * - Dedup: if assignment is completed, don't also show the in-progress unlock
+ * Build Midnight SA list from completedQuestsSquish + progressQuests.
+ * Uses Midnight SA quest IDs from ChoreTracker (pick 2 per week from 8).
  */
 function extractSpecialAssignments(
   charData: AddonCharacter,
   completedQuests: Set<number>,
 ): WeeklyProgress['specialAssignments'] {
   const result: WeeklyProgress['specialAssignments'] = [];
-  const handledNames = new Set<string>();
+  const handledIds = new Set<number>();
 
   // 1. Check completedQuestsSquish for finished SA assignments
   for (const def of SA_DEFINITIONS) {
     if (completedQuests.has(def.assignment)) {
-      result.push({
-        questId: def.assignment,
-        name: `SA: ${def.name}`,
-        completed: true,
-      });
-      handledNames.add(def.name.toLowerCase());
+      result.push({ questId: def.assignment, name: def.name, completed: true });
+      handledIds.add(def.assignment);
+      handledIds.add(def.unlock);
     }
   }
 
-  // 2. Check progressQuests for in-progress SA unlock/assignment quests
-  //    Dedup by tracking quest IDs and SA names we've already added
-  const handledQuestIds = new Set(result.map((r) => r.questId));
-
+  // 2. Check progressQuests for in-progress Midnight SA quests only
+  //    Only match known SA assignment or unlock quest IDs — ignore old TWW/Undermine SAs
   if (charData.progressQuests) {
     for (const pq of charData.progressQuests) {
-      if (!pq.name.startsWith('Special Assignment')) continue;
-      // Skip if this exact quest ID already handled
-      if (handledQuestIds.has(pq.questId)) continue;
-      // Skip if this is a known SA whose assignment is already tracked
+      if (handledIds.has(pq.questId)) continue;
+
+      const isAssignment = SA_ASSIGNMENT_IDS.has(pq.questId);
       const defByUnlock = SA_UNLOCK_TO_DEF.get(pq.questId);
-      if (defByUnlock && handledNames.has(defByUnlock.name.toLowerCase())) continue;
-      // Skip if this is an assignment quest ID whose SA is already tracked
-      if (SA_ASSIGNMENT_IDS.has(pq.questId)) {
-        const def = SA_DEFINITIONS.find((d) => d.assignment === pq.questId);
-        if (def && handledNames.has(def.name.toLowerCase())) continue;
-      }
-      // Dedup by stripped SA name (handles unlock + twwSpecialAssignment overlap)
-      const strippedName = pq.name.replace(/^Special Assignment:\s*/, '').toLowerCase();
-      if (handledNames.has(strippedName)) continue;
-      handledNames.add(strippedName);
-      handledQuestIds.add(pq.questId);
+      // Skip quests that don't match any known Midnight SA
+      if (!isAssignment && !defByUnlock) continue;
+      // If this is an unlock quest, check if we already have the assignment
+      if (defByUnlock && handledIds.has(defByUnlock.assignment)) continue;
+
+      const def = isAssignment
+        ? SA_DEFINITIONS.find((d) => d.assignment === pq.questId)
+        : defByUnlock;
 
       const completed = isQuestCompleted(pq);
       const primaryObj = pq.objectives.find((o) => o.need > 0);
 
       result.push({
         questId: pq.questId,
-        name: pq.name,
+        name: def?.name ?? pq.name.replace(/^Special Assignment:\s*/, ''),
         completed,
         have: primaryObj?.have,
         need: primaryObj?.need,
       });
+      handledIds.add(pq.questId);
+      if (def) {
+        handledIds.add(def.assignment);
+        handledIds.add(def.unlock);
+      }
     }
   }
 

@@ -105,17 +105,49 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
 }
 
 const MOBILE_WEEKLY_ROWS = [
+  { key: 'unity', label: 'Unity' },
+  { key: 'abundance', label: 'Abund' },
+  { key: 'soiree', label: 'Soiree' },
+  { key: 'storm', label: 'Storm' },
+  { key: 'sa', label: 'SA' },
   { key: 'prey_hard', label: 'Hard' },
   { key: 'prey_normal', label: 'Norm' },
-  { key: 'special_assignments', label: 'SA' },
-  { key: 'dungeon_weeklies', label: 'Dung' },
-  { key: 'delves', label: 'Delve' },
+  { key: 'dungeons', label: 'Dung' },
 ] as const;
+
+function countUnityMobile(wp: WeeklyProgress): number {
+  if (!wp.unity) return 0;
+  return Object.values(wp.unity).filter(Boolean).length;
+}
+
+function countSoireeMobile(wp: WeeklyProgress): number {
+  if (!wp.soiree) return 0;
+  return Object.values(wp.soiree).filter(Boolean).length;
+}
 
 function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
   const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
 
   switch (rowKey) {
+    case 'unity': {
+      const count = wp ? countUnityMobile(wp) : 0;
+      return count >= 13 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'abundance':
+      return wp?.abundance ? 'complete' : 'not-started';
+    case 'soiree': {
+      const count = wp ? countSoireeMobile(wp) : 0;
+      return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'storm':
+      return wp?.stormarion ? 'complete' : 'not-started';
+    case 'sa': {
+      const sas = wp?.specialAssignments ?? [];
+      if (sas.length === 0) return 'not-started';
+      const completed = sas.filter((s) => s.completed).length;
+      const hasProgress = sas.some((s) => !s.completed && (s.have ?? 0) > 0);
+      return completed === sas.length ? 'complete' : (completed > 0 || hasProgress) ? 'in-progress' : 'not-started';
+    }
     case 'prey_normal': {
       const count = wp?.prey?.normal ?? 0;
       return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
@@ -124,24 +156,11 @@ function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
       const count = wp?.prey?.hard ?? 0;
       return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
     }
-    case 'special_assignments': {
-      const sas = wp?.specialAssignments ?? [];
-      if (sas.length === 0) return 'not-started';
-      const completed = sas.filter((s) => s.completed).length;
-      const hasProgress = sas.some((s) => !s.completed && (s.have ?? 0) > 0);
-      return completed === sas.length ? 'complete' : (completed > 0 || hasProgress) ? 'in-progress' : 'not-started';
-    }
-    case 'dungeon_weeklies': {
+    case 'dungeons': {
       const dws = wp?.dungeonWeeklies ?? [];
       if (dws.length === 0) return 'not-started';
       const completed = dws.filter((d) => d.completed).length;
       return completed === dws.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
-    }
-    case 'delves': {
-      const dvs = wp?.delves ?? [];
-      if (dvs.length === 0) return 'not-started';
-      const completed = dvs.filter((d) => d.completed).length;
-      return completed === dvs.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
     }
     default: return 'not-started';
   }
@@ -150,13 +169,16 @@ function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
 function MobileWeeklyCard({ characters }: { characters: Character[] }) {
   const hasAnyData = characters.some((char) => {
     const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
-    return wp && (
+    if (!wp) return false;
+    return (
+      (wp.unity && Object.values(wp.unity).some(Boolean)) ||
+      wp.abundance ||
+      (wp.soiree && Object.values(wp.soiree).some(Boolean)) ||
+      wp.stormarion ||
       (wp.prey?.normal ?? 0) > 0 ||
       (wp.prey?.hard ?? 0) > 0 ||
-      (wp.prey?.nightmare ?? 0) > 0 ||
-      wp.specialAssignments.length > 0 ||
-      wp.dungeonWeeklies.length > 0 ||
-      wp.delves.length > 0
+      (wp.specialAssignments?.length ?? 0) > 0 ||
+      (wp.dungeonWeeklies?.length ?? 0) > 0
     );
   });
 
@@ -165,7 +187,7 @@ function MobileWeeklyCard({ characters }: { characters: Character[] }) {
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Weekly Objectives</CardTitle>
+        <CardTitle className="text-sm">Weekly Chores</CardTitle>
       </CardHeader>
       <CardContent className="px-3 pb-2">
         {characters.map((char) => (

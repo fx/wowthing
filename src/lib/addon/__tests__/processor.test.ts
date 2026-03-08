@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('~/db', () => ({ db: {} }));
 
-import { WEEKLY_QUEST_IDS, countPreyFromSquish, countPreyByDifficulty, extractBlizzardId, extractRealmSlug } from '../processor';
+import { WEEKLY_QUEST_IDS, countPreyFromSquish, countPreyByDifficulty, extractBlizzardId, extractRealmSlug, extractWeeklyProgress } from '../processor';
 import type { AddonCharacter } from '../schema';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
@@ -452,15 +452,92 @@ describe('processor logic', () => {
       expect(WEEKLY_QUEST_IDS.has(93767)).toBe(true);
       // Hope quest
       expect(WEEKLY_QUEST_IDS.has(95468)).toBe(true);
-      // Special assignment quest IDs
+      // Midnight SA assignment quest IDs
       expect(WEEKLY_QUEST_IDS.has(91390)).toBe(true);
-      // Unlock quest IDs
+      expect(WEEKLY_QUEST_IDS.has(93438)).toBe(true);
+      // Midnight SA unlock quest IDs
       expect(WEEKLY_QUEST_IDS.has(94865)).toBe(true);
+      expect(WEEKLY_QUEST_IDS.has(94743)).toBe(true);
       // Dungeon weekly
       expect(WEEKLY_QUEST_IDS.has(93751)).toBe(true);
       expect(WEEKLY_QUEST_IDS.has(93758)).toBe(true);
+      // Non-Unity weeklies
+      expect(WEEKLY_QUEST_IDS.has(89507)).toBe(true); // Abundance
+      expect(WEEKLY_QUEST_IDS.has(90573)).toBe(true); // Soiree: Magisters
+      expect(WEEKLY_QUEST_IDS.has(90962)).toBe(true); // Stormarion
       // Non-existent quest should not be in set
       expect(WEEKLY_QUEST_IDS.has(99999)).toBe(false);
+    });
+  });
+
+  describe('extractWeeklyProgress', () => {
+    function makeChar(opts: Partial<AddonCharacter> = {}): AddonCharacter {
+      return { progressQuests: [], ...opts } as AddonCharacter;
+    }
+
+    it('extracts unity pillar completion from completedQuestsSquish', () => {
+      // 93890=Abundance, 93767=Arcantina, 93912=Raid
+      const completed = new Set([93890, 93767, 93912]);
+      const wp = extractWeeklyProgress(makeChar(), completed);
+      expect(wp.unity.abundance).toBe(true);
+      expect(wp.unity.arcantina).toBe(true);
+      expect(wp.unity.raid).toBe(true);
+      expect(wp.unity.dungeons).toBe(false);
+      expect(wp.unity.housing).toBe(false);
+    });
+
+    it('extracts abundance, soiree, stormarion from completedQuestsSquish', () => {
+      const completed = new Set([89507, 90573, 90575, 90962]);
+      const wp = extractWeeklyProgress(makeChar(), completed);
+      expect(wp.abundance).toBe(true);
+      expect(wp.soiree.magisters).toBe(true);
+      expect(wp.soiree.bloodKnights).toBe(false);
+      expect(wp.soiree.farstriders).toBe(true);
+      expect(wp.soiree.shades).toBe(false);
+      expect(wp.stormarion).toBe(true);
+    });
+
+    it('extracts Midnight SA completion from completedQuestsSquish', () => {
+      // 91390 = Temple Broken assignment, 93013 = Push Back the Light assignment
+      const completed = new Set([91390, 93013]);
+      const wp = extractWeeklyProgress(makeChar(), completed);
+      expect(wp.specialAssignments).toHaveLength(2);
+      expect(wp.specialAssignments[0].completed).toBe(true);
+      expect(wp.specialAssignments[0].name).toBe('What Remains of a Temple Broken');
+      expect(wp.specialAssignments[1].completed).toBe(true);
+      expect(wp.specialAssignments[1].name).toBe('Push Back the Light');
+    });
+
+    it('extracts dungeon weeklies by quest ID from completedQuestsSquish', () => {
+      // 93753 = Magisters' Terrace
+      const completed = new Set([93753]);
+      const wp = extractWeeklyProgress(makeChar(), completed);
+      expect(wp.dungeonWeeklies).toHaveLength(1);
+      expect(wp.dungeonWeeklies[0].questId).toBe(93753);
+      expect(wp.dungeonWeeklies[0].completed).toBe(true);
+    });
+
+    it('extracts in-progress dungeon weeklies from progressQuests', () => {
+      const char = makeChar({
+        progressQuests: [
+          { key: 'q1', questId: 93751, name: 'Windrunner Spire', status: 1, expires: 0, objectives: [] },
+        ],
+      });
+      const wp = extractWeeklyProgress(char, new Set());
+      expect(wp.dungeonWeeklies).toHaveLength(1);
+      expect(wp.dungeonWeeklies[0].name).toBe('Windrunner Spire');
+      expect(wp.dungeonWeeklies[0].completed).toBe(false);
+    });
+
+    it('returns default values with empty data', () => {
+      const wp = extractWeeklyProgress(makeChar(), new Set());
+      expect(wp.abundance).toBe(false);
+      expect(wp.stormarion).toBe(false);
+      expect(Object.values(wp.unity).every((v) => v === false)).toBe(true);
+      expect(Object.values(wp.soiree).every((v) => v === false)).toBe(true);
+      expect(wp.specialAssignments).toHaveLength(0);
+      expect(wp.dungeonWeeklies).toHaveLength(0);
+      expect(wp.delves).toHaveLength(0);
     });
   });
 });
