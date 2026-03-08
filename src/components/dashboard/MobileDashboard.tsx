@@ -34,6 +34,7 @@ export function MobileDashboard({
       <MobileWeeklyCard characters={characters} activities={weeklyActivities} />
       <MobileCrestCard characters={characters} />
       <MobileKeystoneCard characters={characters} />
+      <MobileDelveCard characters={characters} />
       <MobileRenownCard renown={renown} />
       <MobileLockoutCard characters={characters} />
       <MobileDailyCard activities={dailyActivities} />
@@ -231,6 +232,38 @@ function MobileKeystoneCard({ characters }: { characters: Character[] }) {
               >
                 {level ? `+${level}` : 'No key'}
               </Badge>
+            </MobileCharacterRow>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MobileDelveCard({ characters }: { characters: Character[] }) {
+  const hasAnyDelves = characters.some(
+    (c) => c.weeklyActivities?.[0]?.delvesGilded != null,
+  );
+  if (!hasAnyDelves) return null;
+
+  return (
+    <Card>
+      <CardHeader className="py-2 px-3">
+        <CardTitle className="text-sm">Delves</CardTitle>
+      </CardHeader>
+      <CardContent className="px-3 pb-2">
+        {characters.map((char) => {
+          const gilded = char.weeklyActivities?.[0]?.delvesGilded ?? 0;
+          return (
+            <MobileCharacterRow key={char.id} character={char}>
+              <span
+                className={cn(
+                  'text-xs font-mono',
+                  gilded > 0 ? 'text-emerald-400' : 'text-zinc-500',
+                )}
+              >
+                {gilded} gilded
+              </span>
             </MobileCharacterRow>
           );
         })}
