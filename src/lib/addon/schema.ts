@@ -97,8 +97,10 @@ const vaultSlotSchema = z.union([
 ]);
 
 const uploadCharacterSchema = z.object({
+  name: z.string().optional(),
   level: z.number().optional(),
   copper: z.number().optional(),
+  guildName: z.string().optional(),
   keystoneInstance: z.number().optional(),
   keystoneLevel: z.number().optional(),
   dailyReset: z.number().optional(),

@@ -56,20 +56,65 @@ export async function processAddonUpload(
     where: inArray(characters.accountId, accountIds),
   });
 
-  // Build lookup: blizzardId -> character (with account for region)
+  // Build lookups for character matching
+  const charWithRegion = userCharacters.map((c) => {
+    const acct = userAccounts.find((a) => a.id === c.accountId);
+    return { character: c, region: acct?.region ?? 'us' };
+  });
+
+  // Primary: match by name + realm slug (derived from addon guildName "region/realm/name")
+  const charByNameRealm = new Map(
+    charWithRegion.map((entry) => [
+      `${entry.character.name.toLowerCase()}|${entry.character.realmSlug.toLowerCase()}`,
+      entry,
+    ]),
+  );
+
+  // Fallback: match by blizzardId (numeric keys)
   const charByBlizzardId = new Map(
-    userCharacters.map((c) => {
-      const account = userAccounts.find((a) => a.id === c.accountId);
-      return [c.blizzardId, { character: c, region: account?.region ?? 'us' }];
-    }),
+    charWithRegion.map((entry) => [entry.character.blizzardId, entry]),
   );
 
   for (const [charKey, charData] of Object.entries(upload.chars)) {
-    const blizzardId = Number.parseInt(charKey);
-    if (Number.isNaN(blizzardId)) continue;
+    // Try to match the addon character to a DB character
+    let match: (typeof charWithRegion)[number] | undefined;
 
-    const match = charByBlizzardId.get(blizzardId);
-    if (!match) continue; // Character not owned by this user
+    // Strategy 1: Match by name + realm from guildName
+    if (charData.name && charData.guildName) {
+      const realmSlug = extractRealmSlug(charData.guildName);
+      if (realmSlug) {
+        match = charByNameRealm.get(
+          `${charData.name.toLowerCase()}|${realmSlug}`,
+        );
+      }
+    }
+
+    // Strategy 2: If no name (active character), try matching unnamed chars
+    // by realm + level against unmatched DB characters
+    if (!match && !charData.name && charData.guildName) {
+      const realmSlug = extractRealmSlug(charData.guildName);
+      if (realmSlug && charData.level) {
+        // Find DB characters on same realm at same level that haven't been matched yet
+        const candidates = charWithRegion.filter(
+          (entry) =>
+            entry.character.realmSlug.toLowerCase() === realmSlug &&
+            entry.character.level === charData.level,
+        );
+        if (candidates.length === 1) {
+          match = candidates[0];
+        }
+      }
+    }
+
+    // Strategy 3: Numeric blizzardId key (legacy format)
+    if (!match) {
+      const blizzardId = Number.parseInt(charKey);
+      if (!Number.isNaN(blizzardId)) {
+        match = charByBlizzardId.get(blizzardId);
+      }
+    }
+
+    if (!match) continue;
 
     const { character, region } = match;
     const regionTyped = region as Region;
@@ -290,6 +335,22 @@ async function processCharacterWeekly(
         syncedAt: new Date(),
       },
     });
+}
+
+/**
+ * Extract realm slug from addon guildName format: "region/realm/guildName"
+ * e.g. "1/Ner'zhul/Wartorn" -> "nerzhul"
+ */
+export function extractRealmSlug(guildName: string): string | null {
+  const parts = guildName.split('/');
+  if (parts.length < 2) return null;
+  // Convert realm name to slug: lowercase, remove apostrophes/spaces/special chars
+  return parts[1]
+    .toLowerCase()
+    .replace(/[' ]/g, '')
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function parseVaultSlots(

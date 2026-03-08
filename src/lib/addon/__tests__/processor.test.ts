@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('~/db', () => ({ db: {} }));
 
-import { WEEKLY_QUEST_IDS } from '../processor';
+import { WEEKLY_QUEST_IDS, extractRealmSlug } from '../processor';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
 // These are internal to processor.ts, so we test the exported behavior indirectly
@@ -343,6 +343,30 @@ describe('processor logic', () => {
         .filter((id) => Number.isFinite(id))
         .filter((id) => WEEKLY_QUEST_IDS.has(id));
       expect(questIds.sort()).toEqual([93751, 93890]);
+    });
+
+    it('WEEKLY_QUEST_IDS does not contain random quest IDs', () => {
+      expect(WEEKLY_QUEST_IDS.has(99999)).toBe(false);
+      expect(WEEKLY_QUEST_IDS.has(0)).toBe(false);
+    });
+  });
+
+  describe('extractRealmSlug', () => {
+    it('extracts realm slug from guildName format', () => {
+      expect(extractRealmSlug("1/Ner'zhul/Wartorn")).toBe('nerzhul');
+    });
+
+    it('handles simple realm names', () => {
+      expect(extractRealmSlug('1/Darkspear/Guild')).toBe('darkspear');
+    });
+
+    it('handles multi-word realm names', () => {
+      expect(extractRealmSlug('1/Area 52/Guild')).toBe('area52');
+    });
+
+    it('returns null for invalid format', () => {
+      expect(extractRealmSlug('invalid')).toBeNull();
+      expect(extractRealmSlug('')).toBeNull();
     });
 
     it('WEEKLY_QUEST_IDS contains known quest IDs from seeds', () => {
