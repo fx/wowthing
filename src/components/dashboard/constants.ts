@@ -4,7 +4,9 @@ export const MYTHIC_DUNGEONS = [
   { instanceId: 1304, name: 'Murder Row', bosses: 4 },
   { instanceId: 1309, name: 'The Blinding Vale', bosses: 4 },
   { instanceId: 1311, name: 'Den of Nalorakk', bosses: 3 },
+  { instanceId: 1313, name: 'Voidscar Arena', bosses: 3 },
   { instanceId: 1315, name: 'Maisara Caverns', bosses: 3 },
+  { instanceId: 1316, name: 'Nexus-Point Xenas', bosses: 3 },
 ] as const;
 
 export const DAWNCREST_TIERS = [
