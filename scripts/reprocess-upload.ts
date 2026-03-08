@@ -27,11 +27,11 @@ async function main() {
   const wa = await db.select().from(weeklyActivities).where(inArray(weeklyActivities.characterId, charIds));
   for (const w of wa) {
     const char = userChars.find(c => c.id === w.characterId);
-    const wp = w.weeklyProgress as Record<string, unknown[]> | null;
+    const wp = w.weeklyProgress as Record<string, unknown> | null;
     console.log(`\n${char?.name} (id ${w.characterId}):`);
-    console.log(`  prey=${w.preyHuntsCompleted}, delves=${w.delvesGilded}, lockouts=${w.lockouts ? (w.lockouts as unknown[]).length : 0}`);
+    console.log(`  preyTotal=${w.preyHuntsCompleted}, delves=${w.delvesGilded}, lockouts=${w.lockouts ? (w.lockouts as unknown[]).length : 0}`);
     if (wp) {
-      console.log(`  weeklyProgress.preyHunts: ${JSON.stringify(wp.preyHunts)}`);
+      console.log(`  weeklyProgress.prey: ${JSON.stringify(wp.prey)}`);
       console.log(`  weeklyProgress.specialAssignments: ${JSON.stringify(wp.specialAssignments)}`);
       console.log(`  weeklyProgress.dungeonWeeklies: ${JSON.stringify(wp.dungeonWeeklies)}`);
       console.log(`  weeklyProgress.delves: ${JSON.stringify(wp.delves)}`);

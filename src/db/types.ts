@@ -16,8 +16,8 @@ export type Lockout = {
 
 /** Categorized weekly progress extracted from addon progressQuests */
 export type WeeklyProgress = {
-  /** Individual prey hunt quests: name -> completed */
-  preyHunts: Array<{ name: string; completed: boolean }>;
+  /** Prey hunts completed this week per difficulty (max 4 each) */
+  prey: { normal: number; hard: number; nightmare: number };
   /** Special assignment quests with completion status */
   specialAssignments: Array<{ questId: number; name: string; completed: boolean }>;
   /** Dungeon-specific weekly quests */

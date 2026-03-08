@@ -105,19 +105,23 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
 }
 
 const MOBILE_WEEKLY_ROWS = [
-  { key: 'prey', label: 'Prey' },
+  { key: 'prey_hard', label: 'Hard' },
+  { key: 'prey_normal', label: 'Norm' },
   { key: 'special_assignments', label: 'SA' },
-  { key: 'dungeon_weeklies', label: 'Dungeon' },
-  { key: 'delves', label: 'Delves' },
+  { key: 'dungeon_weeklies', label: 'Dung' },
+  { key: 'delves', label: 'Delve' },
 ] as const;
 
 function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
-  const weekly = char.weeklyActivities?.[0];
-  const wp = weekly?.weeklyProgress as WeeklyProgress | null | undefined;
+  const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
 
   switch (rowKey) {
-    case 'prey': {
-      const count = weekly?.preyHuntsCompleted ?? 0;
+    case 'prey_normal': {
+      const count = wp?.prey?.normal ?? 0;
+      return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'prey_hard': {
+      const count = wp?.prey?.hard ?? 0;
       return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
     }
     case 'special_assignments': {
@@ -146,7 +150,9 @@ function MobileWeeklyCard({ characters }: { characters: Character[] }) {
   const hasAnyData = characters.some((char) => {
     const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
     return wp && (
-      wp.preyHunts.length > 0 ||
+      (wp.prey?.normal ?? 0) > 0 ||
+      (wp.prey?.hard ?? 0) > 0 ||
+      (wp.prey?.nightmare ?? 0) > 0 ||
       wp.specialAssignments.length > 0 ||
       wp.dungeonWeeklies.length > 0 ||
       wp.delves.length > 0

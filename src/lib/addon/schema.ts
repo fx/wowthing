@@ -111,6 +111,7 @@ const uploadCharacterSchema = z.object({
   lockouts: z.array(lockoutSchema).optional(),
   vault: z.record(z.string(), z.array(vaultSlotSchema)).optional(),
   delvesGilded: z.number().optional(),
+  completedQuestsSquish: z.string().optional(),
   scanTimes: z.record(z.string(), z.number()).optional(),
 });
 

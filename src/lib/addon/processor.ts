@@ -11,6 +11,25 @@ import type { Lockout, VaultSlot, WeeklyProgress } from '~/db/types';
 import { getCurrentResetWeek, getTodayDate } from '~/lib/activities/resets';
 import type { Region } from '~/lib/activities/resets';
 import type { AddonCharacter, AddonUpload } from './schema';
+import { unsquish } from './unsquish';
+
+/** Prey quest IDs per difficulty from upstream wowthing-again */
+const PREY_NORMAL_IDS = new Set([
+  91095, 91096, 91097, 91098, 91099, 91100, 91101, 91102, 91103, 91104,
+  91105, 91106, 91107, 91108, 91109, 91110, 91111, 91112, 91113, 91114,
+  91115, 91116, 91117, 91118, 91119, 91120, 91121, 91122, 91123, 91124,
+]);
+const PREY_HARD_IDS = new Set([
+  91210, 91211, 91212, 91213, 91214, 91215, 91216, 91217, 91218, 91219,
+  91220, 91221, 91222, 91223, 91224, 91225, 91226, 91227, 91228, 91229,
+  91230, 91231, 91232, 91233, 91234, 91235, 91236, 91237, 91238, 91239,
+  91240, 91241, 91242, 91243, 91244, 91245, 91246, 91247, 91248, 91249,
+  91250, 91251, 91252, 91253, 91254, 91255,
+]);
+const PREY_NIGHTMARE_IDS = new Set([
+  91256, 91257, 91258, 91259, 91260, 91261, 91262, 91263, 91264, 91265,
+  91266, 91267, 91268, 91269,
+]);
 
 /**
  * Extract blizzardId from addon Player GUID format: "Player-{realmId}-{hexCharId}"
@@ -277,9 +296,12 @@ async function processCharacterWeekly(
     (vaultRaid?.some((s) => s.progress >= s.threshold) ?? false) ||
     (vaultWorld?.some((s) => s.progress >= s.threshold) ?? false);
 
-  // Extract weekly progress from progressQuests
-  const preyHuntsCompleted = countPreyHunts(charData);
-  const weeklyProgress = extractWeeklyProgress(charData);
+  // Extract weekly progress from progressQuests + completedQuestsSquish
+  const completedQuests = charData.completedQuestsSquish
+    ? unsquish(charData.completedQuestsSquish)
+    : new Set<number>();
+  const preyHuntsCompleted = countPreyFromSquish(completedQuests, charData);
+  const weeklyProgress = extractWeeklyProgress(charData, completedQuests);
 
   // Parse lockouts
   const lockouts: Lockout[] | undefined = charData.lockouts
@@ -343,36 +365,68 @@ export function extractRealmSlug(guildName: string): string | null {
 }
 
 /**
- * Count completed prey hunts from progressQuests.
- * Prey hunts are quests named "Prey: ..." with an objective containing "Hunt Prey".
- * A hunt is "completed" when the objective's have >= need (typically 1/1).
- * The umbrella quest "One Hero's Prey" (92177) tracks the overall weekly count
- * but individual "Prey: ..." quests give a more granular picture.
+ * Count total prey hunts completed this week across all difficulties.
+ * Uses completedQuestsSquish (weekly quest flags) + in-progress quests from quest log.
  */
-export function countPreyHunts(charData: AddonCharacter): number {
-  if (!charData.progressQuests?.length) return 0;
-
-  let count = 0;
-  for (const pq of charData.progressQuests) {
-    // Match individual prey hunt quests: "Prey: <target> (Normal|Hard|Nightmare)"
-    if (!pq.name.startsWith('Prey:')) continue;
-    // Check if hunt objective is completed: status=2 OR have >= need
-    const huntDone =
-      pq.status === 2 ||
-      pq.objectives.some((obj) => obj.need > 0 && obj.have >= obj.need);
-    if (huntDone) count++;
-  }
-  return count;
+export function countPreyFromSquish(
+  completedQuests: Set<number>,
+  charData: AddonCharacter,
+): number {
+  const prey = countPreyByDifficulty(completedQuests, charData);
+  return prey.normal + prey.hard + prey.nightmare;
 }
 
 /**
- * Extract categorized weekly progress from progressQuests.
- * Categorizes quests into prey hunts, special assignments, dungeon weeklies, and delves.
+ * Count prey hunts per difficulty from completed quest flags + in-progress quests.
+ * WoW resets weekly quest completion flags each Tuesday, so completedQuestsSquish
+ * only contains prey quest IDs completed THIS week.
+ * Also counts in-progress prey quests from the quest log (accepted but not turned in).
+ */
+export function countPreyByDifficulty(
+  completedQuests: Set<number>,
+  charData: AddonCharacter,
+): { normal: number; hard: number; nightmare: number } {
+  let normal = 0;
+  let hard = 0;
+  let nightmare = 0;
+
+  // Count completed prey from quest flags
+  for (const id of completedQuests) {
+    if (PREY_NORMAL_IDS.has(id)) normal++;
+    else if (PREY_HARD_IDS.has(id)) hard++;
+    else if (PREY_NIGHTMARE_IDS.has(id)) nightmare++;
+  }
+
+  // Also count in-progress prey from quest log (accepted, objective completed)
+  if (charData.progressQuests) {
+    for (const pq of charData.progressQuests) {
+      if (!pq.name.startsWith('Prey:')) continue;
+      // Skip if already counted via completedQuestsSquish
+      if (completedQuests.has(pq.questId)) continue;
+      // Check if objective is done (have >= need) or status=2
+      const done =
+        pq.status === 2 ||
+        pq.objectives.some((obj) => obj.need > 0 && obj.have >= obj.need);
+      if (!done) continue;
+      if (PREY_NORMAL_IDS.has(pq.questId)) normal++;
+      else if (PREY_HARD_IDS.has(pq.questId)) hard++;
+      else if (PREY_NIGHTMARE_IDS.has(pq.questId)) nightmare++;
+    }
+  }
+
+  return { normal, hard, nightmare };
+}
+
+/**
+ * Extract categorized weekly progress from progressQuests + completedQuestsSquish.
  * A quest is "completed" when status=2 OR all objectives with need>0 have have>=need.
  */
-export function extractWeeklyProgress(charData: AddonCharacter): WeeklyProgress {
+export function extractWeeklyProgress(
+  charData: AddonCharacter,
+  completedQuests: Set<number>,
+): WeeklyProgress {
   const result: WeeklyProgress = {
-    preyHunts: [],
+    prey: countPreyByDifficulty(completedQuests, charData),
     specialAssignments: [],
     dungeonWeeklies: [],
     delves: [],
@@ -381,15 +435,16 @@ export function extractWeeklyProgress(charData: AddonCharacter): WeeklyProgress 
   if (!charData.progressQuests?.length) return result;
 
   for (const pq of charData.progressQuests) {
+    // Skip prey quests — handled by countPreyByDifficulty
+    if (pq.name.startsWith('Prey:')) continue;
+
     const completed =
       pq.status === 2 ||
       (pq.objectives.length > 0 &&
         pq.objectives.some((obj) => obj.need > 0) &&
         pq.objectives.every((obj) => obj.need === 0 || obj.have >= obj.need));
 
-    if (pq.name.startsWith('Prey:')) {
-      result.preyHunts.push({ name: pq.name, completed });
-    } else if (pq.name.startsWith('Special Assignment')) {
+    if (pq.name.startsWith('Special Assignment')) {
       result.specialAssignments.push({
         questId: pq.questId,
         name: pq.name,

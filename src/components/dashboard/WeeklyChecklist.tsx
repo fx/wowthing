@@ -24,7 +24,9 @@ interface WeeklyChecklistProps {
 
 /** Rows to display in the weekly objectives grid */
 const WEEKLY_ROWS = [
-  { key: 'prey', label: 'Prey', tooltip: 'Complete prey hunts (4 per week max)' },
+  { key: 'prey_hard', label: 'Prey (Hard)', tooltip: 'Hard prey hunts — first 2 reward a chest (4/week max)' },
+  { key: 'prey_normal', label: 'Prey (Normal)', tooltip: 'Normal prey hunts (4/week max)' },
+  { key: 'prey_nightmare', label: 'Prey (NM)', tooltip: 'Nightmare prey hunts (4/week max)' },
   { key: 'special_assignments', label: 'SA', tooltip: 'Special Assignments' },
   { key: 'dungeon_weeklies', label: 'Dungeon', tooltip: 'Dungeon weekly quests' },
   { key: 'delves', label: 'Delves', tooltip: 'Delve completion quests' },
@@ -41,7 +43,9 @@ export function WeeklyChecklist({
       const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
       if (!wp) return false;
       switch (row.key) {
-        case 'prey': return (char.weeklyActivities?.[0]?.preyHuntsCompleted ?? 0) > 0 || wp.preyHunts.length > 0;
+        case 'prey_normal': return (wp.prey?.normal ?? 0) > 0;
+        case 'prey_hard': return (wp.prey?.hard ?? 0) > 0;
+        case 'prey_nightmare': return (wp.prey?.nightmare ?? 0) > 0;
         case 'special_assignments': return wp.specialAssignments.length > 0;
         case 'dungeon_weeklies': return wp.dungeonWeeklies.length > 0;
         case 'delves': return wp.delves.length > 0;
@@ -102,25 +106,31 @@ export function WeeklyChecklist({
   );
 }
 
+function resolvePreyStatus(
+  count: number,
+): { state: ActivityState; label: string; tooltip: string } {
+  const state: ActivityState =
+    count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+  return {
+    state,
+    label: `${count}/4`,
+    tooltip: `${count}/4 completed this week`,
+  };
+}
+
 function resolveRowStatus(
   char: Character,
   rowKey: string,
 ): { state: ActivityState; label: string | undefined; tooltip: string } {
-  const weekly = char.weeklyActivities?.[0];
-  const wp = weekly?.weeklyProgress as WeeklyProgress | null | undefined;
+  const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
 
   switch (rowKey) {
-    case 'prey': {
-      const count = weekly?.preyHuntsCompleted ?? 0;
-      const total = wp?.preyHunts.length ?? 0;
-      const state: ActivityState =
-        count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
-      return {
-        state,
-        label: total > 0 || count > 0 ? `${count}/${Math.max(total, 4)}` : undefined,
-        tooltip: `Prey Hunts: ${count} completed`,
-      };
-    }
+    case 'prey_normal':
+      return resolvePreyStatus(wp?.prey?.normal ?? 0);
+    case 'prey_hard':
+      return resolvePreyStatus(wp?.prey?.hard ?? 0);
+    case 'prey_nightmare':
+      return resolvePreyStatus(wp?.prey?.nightmare ?? 0);
 
     case 'special_assignments': {
       const sas = wp?.specialAssignments ?? [];
