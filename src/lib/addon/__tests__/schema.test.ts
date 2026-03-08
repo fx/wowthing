@@ -177,7 +177,7 @@ describe('uploadSchema', () => {
     expect(() => uploadSchema.parse({})).toThrow();
     expect(() => uploadSchema.parse({ version: 'abc' })).toThrow();
     expect(() =>
-      uploadSchema.parse({ version: 1, battleTag: 123, chars: {} }),
+      uploadSchema.parse({ version: 1, chars: 'not-an-object' }),
     ).toThrow();
   });
 });

@@ -99,13 +99,12 @@ const uploadCharacterSchema = z.object({
   lockouts: z.array(lockoutSchema).optional(),
   vault: z.record(z.string(), z.array(z.any())).optional(),
   scanTimes: z.record(z.string(), z.number()).optional(),
-});
+}).passthrough();
 
 export const uploadSchema = z.object({
   version: z.number(),
-  battleTag: z.string(),
   chars: z.record(z.string(), uploadCharacterSchema),
-});
+}).passthrough();
 
 export type AddonUpload = z.infer<typeof uploadSchema>;
 export type AddonCharacter = z.infer<typeof uploadCharacterSchema>;
