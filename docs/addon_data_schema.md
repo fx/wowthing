@@ -112,9 +112,11 @@ Three tiers with 3 slots each. Progress resets weekly.
 Fields per slot:
 - `threshold` — number needed to unlock this slot
 - `progress` — current progress toward threshold
-- `level` — reward item level (set when slot is earned)
+- `level` — reward quality level from the vault (set when slot is earned)
 - `tier` — reward quality tier
 - `rewards` — available reward choices (populated after reset)
+
+The processor stores both `level` and `itemLevel` separately in the database. For the legacy array format, the index mapping is `[level, progress, threshold, itemLevel, upgradeItemLevel?]`.
 
 Also: `vaultGeneratedRewards` (boolean) and `vaultAvailableRewards` (boolean) indicate vault state.
 
