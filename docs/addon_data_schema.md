@@ -154,7 +154,7 @@ Difficulty IDs: 14=Normal, 15=Heroic, 16=Mythic, 23=Mythic (current raid format)
 
 Boss format: `"defeated:bossName"` where `1` = killed, `0` = alive.
 
-> **Note:** The seed file references instance IDs 16340, 16531, 16215 which don't match these real lockout IDs. The seed data needs updating to match actual game data.
+> **Note:** The seed file `seeds/activities.yaml` now uses these real Midnight lockout instance IDs.
 
 ##### Mythic+ (`mythicPlusV2`)
 
@@ -370,21 +370,3 @@ How addon data maps to weekly activities defined in `seeds/activities.yaml`:
 | Bountiful Delves | `delves` + quest tracking | Track daily delve completions |
 | Raid Lockouts | `lockouts[]` | Match `id` to known instance IDs, read `defeatedBosses/maxBosses` |
 
-### Seed Data vs Real Data Discrepancies
-
-The `seeds/activities.yaml` lockout instance IDs don't match real addon data:
-
-| Seed File | Real Addon Data |
-|-----------|----------------|
-| Voidspire (16340) | Windrunner Spire (1299), Magisters' Terrace (1300), Murder Row (1304), The Blinding Vale (1309), Den of Nalorakk (1311), Maisara Caverns (1315) |
-| Dreamrift (16531) | Not seen in data |
-| Quel'Danes (16215) | Not seen in data |
-
-The seed IDs appear to be placeholder/speculative. Real lockout IDs from the addon need to be used instead. The raid is split into 6 wings rather than 3 large instances.
-
-### Character Key Mapping Gap
-
-The addon uses `Player-{realmId}-{guid}` format while the database stores integer `blizzardId` from the API. Options:
-1. Store the addon character key in the `characters` table
-2. Match by name + realm (fragile)
-3. Map via the Blizzard API character profile which includes the GUID
