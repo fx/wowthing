@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('~/db', () => ({ db: {} }));
+
 import { WEEKLY_QUEST_IDS } from '../processor';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
