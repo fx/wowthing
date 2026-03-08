@@ -112,11 +112,13 @@ export async function startBoss(): Promise<PgBoss> {
 
   // --- Cron jobs ---
 
+  await boss.createQueue('schedule-syncs');
   await boss.schedule('schedule-syncs', '* * * * *');
   await boss.work('schedule-syncs', async () => {
     await scheduleCharacterSyncs(boss);
   });
 
+  await boss.createQueue('session-cleanup');
   await boss.schedule('session-cleanup', '0 3 * * *');
   await boss.work('session-cleanup', async () => {
     // TODO: implement session cleanup
