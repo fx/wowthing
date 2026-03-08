@@ -199,13 +199,13 @@ Characters can have 400+ currencies tracked (including legacy).
 Array of pipe-delimited strings for in-progress quests.
 
 ```
-"questKey|questId|questName|status|expires|objectiveType;description;have;need[^obj2...]"
+"questKey|questId|questName|status|expires|objectiveType~description~have~need[^obj2...]"
 ```
 
 Example:
 ```
-"q85460|85460|Ecological Succession|1|0|progressbar;Help the Oasis (0%);0;100"
-"q92319|92319|A Favor to Axe|1|0|item;0/10 Rusty Axe;0;10"
+"q85460|85460|Ecological Succession|1|0|progressbar~Help the Oasis (0%)~0~100"
+"q92319|92319|A Favor to Axe|1|0|item~0/10 Rusty Axe~0~10"
 ```
 
 Fields:
@@ -214,7 +214,7 @@ Fields:
 - `questName` — display name
 - `status` — 1=in progress
 - `expires` — expiry timestamp (0 = no expiry)
-- Objectives: `type;description;have;need` separated by `^` for multiple
+- Objectives: `type~description~have~need` separated by `^` for multiple
 
 Can contain 50-70 quests per character (mix of weekly, campaign, and one-time).
 
