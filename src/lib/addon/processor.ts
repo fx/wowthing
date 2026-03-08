@@ -274,18 +274,7 @@ async function processCharacterWeekly(
 }
 
 function parseVaultSlots(
-  vault:
-    | Record<
-        string,
-        Array<{
-          threshold: number;
-          progress: number;
-          level?: number;
-          tier?: number;
-          rewards?: unknown;
-        }>
-      >
-    | undefined,
+  vault: AddonCharacter['vault'],
   tier: string,
 ): VaultSlot[] | undefined {
   if (!vault || !vault[tier]) return undefined;
