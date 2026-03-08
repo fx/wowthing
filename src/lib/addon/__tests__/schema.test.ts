@@ -10,8 +10,9 @@ describe('uploadSchema', () => {
     };
     const result = uploadSchema.parse(input);
     expect(result.version).toBe(1);
-    expect(result.battleTag).toBe('Player#1234');
     expect(result.chars).toEqual({});
+    // battleTag is an extra field not in the schema, so it gets stripped
+    expect('battleTag' in result).toBe(false);
   });
 
   it('parses character with currencies', () => {
@@ -177,7 +178,68 @@ describe('uploadSchema', () => {
     expect(() => uploadSchema.parse({})).toThrow();
     expect(() => uploadSchema.parse({ version: 'abc' })).toThrow();
     expect(() =>
-      uploadSchema.parse({ version: 1, battleTag: 123, chars: {} }),
+      uploadSchema.parse({ version: 1, chars: 'not-an-object' }),
     ).toThrow();
+  });
+
+  it('accepts extra top-level fields but strips them from output', () => {
+    const input = {
+      version: 1,
+      chars: {},
+      guilds: { '100': { name: 'Test Guild' } },
+      toys: [123, 456],
+      battlePets: { '1': { species: 42 } },
+    };
+    const result = uploadSchema.parse(input);
+    expect(result.version).toBe(1);
+    expect(result.chars).toEqual({});
+    expect('guilds' in result).toBe(false);
+    expect('toys' in result).toBe(false);
+    expect('battlePets' in result).toBe(false);
+  });
+
+  it('accepts extra character fields but strips them from output', () => {
+    const input = {
+      version: 1,
+      chars: {
+        '12345': {
+          level: 90,
+          houses: [{ id: 1, name: 'Cozy Cottage' }],
+          decor: { placed: 5, total: 20 },
+          reputation: { '2503': 42000 },
+        },
+      },
+    };
+    const result = uploadSchema.parse(input);
+    const char = result.chars['12345'];
+    expect(char.level).toBe(90);
+    expect('houses' in char).toBe(false);
+    expect('decor' in char).toBe(false);
+    expect('reputation' in char).toBe(false);
+  });
+
+  it('validates known fields and strips extra fields', () => {
+    const input = {
+      version: 2,
+      chars: {
+        '99': {
+          level: 80,
+          copper: 5000,
+          extraField: 'should be stripped',
+          currencies: {
+            '3383': '10:100:0:0:0:0:0',
+          },
+        },
+      },
+      scanTimes: { global: 1710000000 },
+    };
+    const result = uploadSchema.parse(input);
+    expect(result.version).toBe(2);
+    expect('scanTimes' in result).toBe(false);
+    const char = result.chars['99'];
+    expect(char.level).toBe(80);
+    expect(char.copper).toBe(5000);
+    expect('extraField' in char).toBe(false);
+    expect(char.currencies!['3383'].quantity).toBe(10);
   });
 });

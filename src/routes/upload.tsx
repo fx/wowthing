@@ -1,17 +1,11 @@
-import { createFileRoute, redirect, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 import { useState, useCallback, useRef } from 'react';
 import { Button, Card, CardContent } from '@fx/ui';
-import { authClient } from '~/lib/auth/client';
-import { uploadAddonData } from '~/server/functions/upload';
+import { checkUploadAuth, uploadAddonData } from '~/server/functions/upload';
 import { cn } from '~/lib/utils';
 
 export const Route = createFileRoute('/upload')({
-  beforeLoad: async () => {
-    const session = await authClient.getSession();
-    if (!session.data) {
-      throw redirect({ to: '/login' });
-    }
-  },
+  loader: () => checkUploadAuth(),
   component: UploadPage,
 });
 

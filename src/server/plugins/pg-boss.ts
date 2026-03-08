@@ -18,7 +18,7 @@ export type JobRegistry = {
   'sync-character-profile': { characterId: number; region: string };
   'sync-character-quests': { characterId: number; region: string };
   'sync-character-reputations': { characterId: number; region: string };
-  'process-addon-upload': { userId: number; upload: unknown };
+  'process-addon-upload': { userId: number; uploadId: number; upload: unknown };
   'schedule-syncs': Record<string, never>;
   'session-cleanup': Record<string, never>;
 };

@@ -103,7 +103,6 @@ const uploadCharacterSchema = z.object({
 
 export const uploadSchema = z.object({
   version: z.number(),
-  battleTag: z.string(),
   chars: z.record(z.string(), uploadCharacterSchema),
 });
 
