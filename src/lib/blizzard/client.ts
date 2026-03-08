@@ -30,10 +30,9 @@ export class BlizzardClient {
       headers['If-Modified-Since'] = ifModifiedSince;
     }
 
-    const res = await globalThis.fetch(
-      `${API_HOSTS[this.region]}${path}`,
-      { headers },
-    );
+    const separator = path.includes('?') ? '&' : '?';
+    const url = `${API_HOSTS[this.region]}${path}${separator}namespace=profile-${this.region}`;
+    const res = await globalThis.fetch(url, { headers });
 
     if (res.status === 304) {
       return { data: null, lastModified: ifModifiedSince ?? null, notModified: true };

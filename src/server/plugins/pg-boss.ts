@@ -1,6 +1,10 @@
+import { eq } from 'drizzle-orm';
 import PgBoss from 'pg-boss';
+import { db } from '~/db';
+import { users } from '~/db/schema';
 import { processAddonUpload } from '~/lib/addon/processor';
 import type { AddonUpload } from '~/lib/addon/schema';
+import { decrypt } from '~/lib/auth/encryption';
 import { syncUserProfile } from '~/lib/blizzard/sync-profile';
 import {
   syncCharacterProfile,
@@ -10,7 +14,7 @@ import {
 import { scheduleCharacterSyncs } from '~/lib/blizzard/scheduler';
 
 export type JobRegistry = {
-  'sync-user-profile': { userId: number; accessToken: string; region: string };
+  'sync-user-profile': { userId: number; region: string };
   'sync-character-profile': { characterId: number; region: string };
   'sync-character-quests': { characterId: number; region: string };
   'sync-character-reputations': { characterId: number; region: string };
@@ -20,10 +24,14 @@ export type JobRegistry = {
 };
 
 let bossInstance: PgBoss | null = null;
+let startPromise: Promise<PgBoss> | null = null;
 
-export function getBoss(): PgBoss {
-  if (!bossInstance) throw new Error('pg-boss not initialized');
-  return bossInstance;
+export async function getBossAsync(): Promise<PgBoss> {
+  if (bossInstance) return bossInstance;
+  if (!startPromise) {
+    startPromise = startBoss();
+  }
+  return startPromise;
 }
 
 export async function startBoss(): Promise<PgBoss> {
@@ -49,11 +57,12 @@ export async function startBoss(): Promise<PgBoss> {
     { batchSize: 2 },
     async (jobs) => {
       for (const job of jobs) {
-        await syncUserProfile(
-          job.data.userId,
-          job.data.accessToken,
-          job.data.region,
-        );
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, job.data.userId),
+        });
+        if (!user) continue;
+        const accessToken = decrypt(user.accessToken);
+        await syncUserProfile(job.data.userId, accessToken, job.data.region);
       }
     },
   );
@@ -103,11 +112,13 @@ export async function startBoss(): Promise<PgBoss> {
 
   // --- Cron jobs ---
 
+  await boss.createQueue('schedule-syncs');
   await boss.schedule('schedule-syncs', '* * * * *');
   await boss.work('schedule-syncs', async () => {
     await scheduleCharacterSyncs(boss);
   });
 
+  await boss.createQueue('session-cleanup');
   await boss.schedule('session-cleanup', '0 3 * * *');
   await boss.work('session-cleanup', async () => {
     // TODO: implement session cleanup

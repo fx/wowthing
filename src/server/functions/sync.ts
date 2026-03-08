@@ -2,9 +2,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { eq } from 'drizzle-orm';
 import { db } from '~/db';
 import { users } from '~/db/schema';
-import { decrypt } from '~/lib/auth/encryption';
 import { authMiddleware } from '~/lib/auth/middleware';
-import { getBoss } from '~/server/plugins/pg-boss';
+import { getBossAsync } from '~/server/plugins/pg-boss';
 
 export const triggerSync = createServerFn({ method: 'POST' })
   .middleware([authMiddleware])
@@ -22,14 +21,11 @@ export const triggerSync = createServerFn({ method: 'POST' })
       throw new Error('User not found');
     }
 
-    const accessToken = decrypt(user.accessToken);
-
-    const boss = getBoss();
+    const boss = await getBossAsync();
     await boss.send(
       'sync-user-profile',
       {
         userId: numericUserId,
-        accessToken,
         region: user.region,
       },
       {
