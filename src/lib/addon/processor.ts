@@ -1,4 +1,4 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '~/db';
 import {
   accounts,
@@ -17,7 +17,11 @@ const DIFFICULTY_MAP: Record<number, Lockout['difficulty']> = {
   14: 'normal',
   15: 'heroic',
   16: 'mythic',
+  23: 'mythic',
 };
+
+/** Dawncrest currency IDs that use isMovingMax tracking */
+const MOVING_MAX_CURRENCY_IDS = new Set([3383, 3341, 3343, 3345, 3348]);
 
 export async function processAddonUpload(
   userId: number,
@@ -45,8 +49,8 @@ export async function processAddonUpload(
   );
 
   for (const [charKey, charData] of Object.entries(upload.chars)) {
-    const blizzardId = parseInt(charKey);
-    if (isNaN(blizzardId)) continue;
+    const blizzardId = Number.parseInt(charKey);
+    if (Number.isNaN(blizzardId)) continue;
 
     const match = charByBlizzardId.get(blizzardId);
     if (!match) continue; // Character not owned by this user
@@ -58,7 +62,13 @@ export async function processAddonUpload(
 
     await Promise.all([
       processCharacterCurrencies(character.id, charData),
-      processCharacterQuests(character.id, charData, resetWeek, todayDate),
+      processCharacterQuests(
+        character.id,
+        charData,
+        resetWeek,
+        todayDate,
+        upload.questsV2,
+      ),
       processCharacterWeekly(character.id, charData, resetWeek),
     ]);
   }
@@ -71,8 +81,24 @@ async function processCharacterCurrencies(
   if (!charData.currencies) return;
 
   for (const [currencyIdStr, parsed] of Object.entries(charData.currencies)) {
-    const currencyId = parseInt(currencyIdStr);
-    if (isNaN(currencyId)) continue;
+    const currencyId = Number.parseInt(currencyIdStr);
+    if (Number.isNaN(currencyId)) continue;
+
+    // For isMovingMax currencies (e.g. Dawncrests), use totalQuantity as
+    // the weekly progress since quantity tracks the rolling total, not the
+    // standard isWeekly/weekQuantity fields.
+    const isMovingMax =
+      parsed.isMovingMax && MOVING_MAX_CURRENCY_IDS.has(currencyId);
+    const weekQuantity = isMovingMax
+      ? parsed.totalQuantity
+      : parsed.isWeekly
+        ? parsed.weekQuantity
+        : null;
+    const weekMax = isMovingMax
+      ? parsed.max || 200
+      : parsed.isWeekly
+        ? parsed.weekMax
+        : null;
 
     await db
       .insert(currencies)
@@ -81,16 +107,16 @@ async function processCharacterCurrencies(
         currencyId,
         quantity: parsed.quantity,
         maxQuantity: parsed.max || null,
-        weekQuantity: parsed.isWeekly ? parsed.weekQuantity : null,
-        weekMax: parsed.isWeekly ? parsed.weekMax : null,
+        weekQuantity,
+        weekMax,
       })
       .onConflictDoUpdate({
         target: [currencies.characterId, currencies.currencyId],
         set: {
           quantity: parsed.quantity,
           maxQuantity: parsed.max || null,
-          weekQuantity: parsed.isWeekly ? parsed.weekQuantity : null,
-          weekMax: parsed.isWeekly ? parsed.weekMax : null,
+          weekQuantity,
+          weekMax,
           updatedAt: new Date(),
         },
       });
@@ -102,6 +128,7 @@ async function processCharacterQuests(
   charData: AddonCharacter,
   resetWeek: string,
   todayDate: string,
+  questsV2?: Record<string, number>,
 ): Promise<void> {
   // Daily quests — check existing to avoid duplicates (no unique constraint)
   if (charData.dailyQuests && charData.dailyQuests.length > 0) {
@@ -158,6 +185,37 @@ async function processCharacterQuests(
       await db.insert(questCompletions).values(newWeekly);
     }
   }
+
+  // Account-wide quests from questsV2 — store as weekly completions
+  if (questsV2) {
+    const questIds = Object.keys(questsV2).map((id) => Number.parseInt(id));
+    if (questIds.length > 0) {
+      const existingAccountQuests = await db
+        .select({ questId: questCompletions.questId })
+        .from(questCompletions)
+        .where(
+          and(
+            eq(questCompletions.characterId, characterId),
+            eq(questCompletions.resetWeek, resetWeek),
+            eq(questCompletions.resetType, 'weekly'),
+          ),
+        );
+      const existingIds = new Set(existingAccountQuests.map((r) => r.questId));
+
+      const newAccountQuests = questIds
+        .filter((qid) => !existingIds.has(qid))
+        .map((questId) => ({
+          characterId,
+          questId,
+          resetType: 'weekly' as const,
+          resetWeek,
+        }));
+
+      if (newAccountQuests.length > 0) {
+        await db.insert(questCompletions).values(newAccountQuests);
+      }
+    }
+  }
 }
 
 async function processCharacterWeekly(
@@ -197,6 +255,7 @@ async function processCharacterWeekly(
       keystoneDungeonId: charData.keystoneInstance ?? null,
       keystoneLevel: charData.keystoneLevel ?? null,
       lockouts: lockouts?.length ? lockouts : null,
+      delvesGilded: charData.delvesGilded ?? null,
     })
     .onConflictDoUpdate({
       target: [weeklyActivities.characterId, weeklyActivities.resetWeek],
@@ -208,23 +267,34 @@ async function processCharacterWeekly(
         keystoneDungeonId: charData.keystoneInstance ?? null,
         keystoneLevel: charData.keystoneLevel ?? null,
         lockouts: lockouts?.length ? lockouts : null,
+        delvesGilded: charData.delvesGilded ?? null,
         syncedAt: new Date(),
       },
     });
 }
 
 function parseVaultSlots(
-  vault: Record<string, unknown[]> | undefined,
+  vault:
+    | Record<
+        string,
+        Array<{
+          threshold: number;
+          progress: number;
+          level?: number;
+          tier?: number;
+          rewards?: unknown;
+        }>
+      >
+    | undefined,
   tier: string,
 ): VaultSlot[] | undefined {
   if (!vault || !vault[tier]) return undefined;
   const raw = vault[tier];
   if (!Array.isArray(raw) || raw.length === 0) return undefined;
 
-  // Vault data comes as arrays of [level, progress, threshold, itemLevel, upgradeItemLevel?]
-  return raw
-    .filter((entry) => Array.isArray(entry))
-    .map((entry) => {
+  return raw.map((entry) => {
+    // Handle both object format (new typed schema) and legacy array format
+    if (Array.isArray(entry)) {
       const arr = entry as number[];
       return {
         level: arr[0] ?? 0,
@@ -233,5 +303,12 @@ function parseVaultSlots(
         itemLevel: arr[3] ?? 0,
         ...(arr[4] != null ? { upgradeItemLevel: arr[4] } : {}),
       };
-    });
+    }
+    return {
+      level: entry.level ?? 0,
+      progress: entry.progress ?? 0,
+      threshold: entry.threshold ?? 0,
+      itemLevel: 0,
+    };
+  });
 }
