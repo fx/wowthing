@@ -1,5 +1,5 @@
-import { cn } from '~/lib/utils';
 import { CharacterName } from '~/components/shared/CharacterName';
+import { cn } from '~/lib/utils';
 import type { DashboardData } from '~/server/functions/activities';
 
 type Character = DashboardData['characters'][number];

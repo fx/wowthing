@@ -16,14 +16,13 @@ export function EmptyState() {
             <Button
               variant="default"
               className="w-full flex-1"
-              onClick={() => { window.location.href = '/upload'; }}
+              onClick={() => {
+                window.location.href = '/upload';
+              }}
             >
               Upload Addon Data
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => window.location.reload()}
-            >
+            <Button variant="outline" onClick={() => window.location.reload()}>
               Refresh
             </Button>
           </div>

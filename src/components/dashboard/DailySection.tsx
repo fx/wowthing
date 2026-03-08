@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle, Badge } from '@fx/ui';
+import { Badge, Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
 import type { DashboardData } from '~/server/functions/activities';
 
 type ActivityDef = DashboardData['activities'][number];

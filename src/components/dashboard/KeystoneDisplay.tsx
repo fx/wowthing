@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
+import type { DashboardData } from '~/server/functions/activities';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
-import type { DashboardData } from '~/server/functions/activities';
 
 type Character = DashboardData['characters'][number];
 

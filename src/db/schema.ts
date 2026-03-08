@@ -1,16 +1,16 @@
-import {
-  pgTable,
-  text,
-  integer,
-  boolean,
-  timestamp,
-  jsonb,
-  serial,
-  uniqueIndex,
-  index,
-} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import type { VaultSlot, Lockout } from './types';
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core';
+import type { Lockout, VaultSlot } from './types';
 
 const tz = { withTimezone: true } as const;
 
@@ -144,9 +144,7 @@ export const weeklyActivities = pgTable(
     syncedAt: timestamp('synced_at', tz),
     createdAt: timestamp('created_at', tz).defaultNow().notNull(),
   },
-  (t) => [
-    uniqueIndex('idx_weekly_char_week').on(t.characterId, t.resetWeek),
-  ],
+  (t) => [uniqueIndex('idx_weekly_char_week').on(t.characterId, t.resetWeek)],
 );
 
 // === Quest Completions ===
@@ -193,10 +191,7 @@ export const currencies = pgTable(
     updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
   },
   (t) => [
-    uniqueIndex('idx_currencies_char_currency').on(
-      t.characterId,
-      t.currencyId,
-    ),
+    uniqueIndex('idx_currencies_char_currency').on(t.characterId, t.currencyId),
   ],
 );
 
@@ -214,9 +209,7 @@ export const renown = pgTable(
     reputationMax: integer('reputation_max').notNull().default(2500),
     updatedAt: timestamp('updated_at', tz).defaultNow().notNull(),
   },
-  (t) => [
-    uniqueIndex('idx_renown_user_faction').on(t.userId, t.factionId),
-  ],
+  (t) => [uniqueIndex('idx_renown_user_faction').on(t.userId, t.factionId)],
 );
 
 // === Activity Definitions (seeded) ===
@@ -239,9 +232,7 @@ export const activityDefinitions = pgTable(
     enabled: boolean('enabled').notNull().default(true),
     metadata: jsonb('metadata'),
   },
-  (t) => [
-    index('idx_activity_defs_expansion').on(t.expansionId, t.category),
-  ],
+  (t) => [index('idx_activity_defs_expansion').on(t.expansionId, t.category)],
 );
 
 // === Sessions ===
@@ -312,18 +303,15 @@ export const accountsRelations = relations(accounts, ({ one, many }) => ({
   characters: many(characters),
 }));
 
-export const charactersRelations = relations(
-  characters,
-  ({ one, many }) => ({
-    account: one(accounts, {
-      fields: [characters.accountId],
-      references: [accounts.id],
-    }),
-    weeklyActivities: many(weeklyActivities),
-    questCompletions: many(questCompletions),
-    currencies: many(currencies),
+export const charactersRelations = relations(characters, ({ one, many }) => ({
+  account: one(accounts, {
+    fields: [characters.accountId],
+    references: [accounts.id],
   }),
-);
+  weeklyActivities: many(weeklyActivities),
+  questCompletions: many(questCompletions),
+  currencies: many(currencies),
+}));
 
 export const weeklyActivitiesRelations = relations(
   weeklyActivities,

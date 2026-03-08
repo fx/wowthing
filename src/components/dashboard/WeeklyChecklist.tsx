@@ -8,9 +8,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
+import type { DashboardData } from '~/server/functions/activities';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
-import type { DashboardData } from '~/server/functions/activities';
 
 type Character = DashboardData['characters'][number];
 type ActivityDef = DashboardData['activities'][number];
@@ -63,7 +63,10 @@ export function WeeklyChecklist({
                     </TooltipProvider>
                   </td>
                   {characters.map((char) => {
-                    const { state, label, tooltip } = resolveActivityStatus(char, activity);
+                    const { state, label, tooltip } = resolveActivityStatus(
+                      char,
+                      activity,
+                    );
                     return (
                       <StatusCell
                         key={char.id}
@@ -86,7 +89,9 @@ export function WeeklyChecklist({
 
 function resolveActivityStatus(char: Character, activity: ActivityDef) {
   const completions = char.questCompletions ?? [];
-  const matches = completions.filter((qc) => activity.questIds?.includes(qc.questId));
+  const matches = completions.filter((qc) =>
+    activity.questIds?.includes(qc.questId),
+  );
 
   if (activity.accountWide && matches.length > 0) {
     return {
@@ -99,7 +104,11 @@ function resolveActivityStatus(char: Character, activity: ActivityDef) {
     const count = matches.length;
     const done = count >= activity.threshold;
     return {
-      state: done ? ('complete' as const) : count > 0 ? ('in-progress' as const) : ('not-started' as const),
+      state: done
+        ? ('complete' as const)
+        : count > 0
+          ? ('in-progress' as const)
+          : ('not-started' as const),
       label: `${count}/${activity.threshold}`,
       tooltip: `${activity.name}: ${count}/${activity.threshold}`,
     };
