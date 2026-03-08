@@ -135,15 +135,20 @@ function resolveRowStatus(
     case 'special_assignments': {
       const sas = wp?.specialAssignments ?? [];
       const completed = sas.filter((s) => s.completed).length;
+      const hasProgress = sas.some((s) => !s.completed && (s.have ?? 0) > 0);
       const state: ActivityState =
         sas.length === 0
           ? 'not-started'
           : completed === sas.length
             ? 'complete'
-            : completed > 0
+            : completed > 0 || hasProgress
               ? 'in-progress'
               : 'not-started';
-      const names = sas.map((s) => `${s.completed ? '\u2713' : '\u2717'} ${s.name}`).join('\n');
+      const names = sas.map((s) => {
+        const icon = s.completed ? '\u2713' : '\u2717';
+        const progress = s.have != null && s.need != null ? ` (${s.have}/${s.need})` : '';
+        return `${icon} ${s.name}${progress}`;
+      }).join('\n');
       return {
         state,
         label: sas.length > 0 ? `${completed}/${sas.length}` : undefined,

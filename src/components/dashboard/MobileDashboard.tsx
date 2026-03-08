@@ -128,7 +128,8 @@ function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
       const sas = wp?.specialAssignments ?? [];
       if (sas.length === 0) return 'not-started';
       const completed = sas.filter((s) => s.completed).length;
-      return completed === sas.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
+      const hasProgress = sas.some((s) => !s.completed && (s.have ?? 0) > 0);
+      return completed === sas.length ? 'complete' : (completed > 0 || hasProgress) ? 'in-progress' : 'not-started';
     }
     case 'dungeon_weeklies': {
       const dws = wp?.dungeonWeeklies ?? [];

@@ -31,6 +31,30 @@ const PREY_NIGHTMARE_IDS = new Set([
   91266, 91267, 91268, 91269,
 ]);
 
+/** SA quest IDs from upstream wowthing-again: assignment + unlock per SA.
+ *  Completed SAs are detected via completedQuestsSquish (assignment quest ID). */
+const SA_DEFINITIONS: Array<{ name: string; assignment: number; unlock: number }> = [
+  // 11.0 TWW
+  { name: 'A Pound of Cure', assignment: 82414, unlock: 82159 },
+  { name: 'Bombs From Behind', assignment: 82531, unlock: 82161 },
+  { name: 'Cinderbee Surge', assignment: 82355, unlock: 82146 },
+  { name: 'Lynx Rescue', assignment: 82852, unlock: 82158 },
+  { name: 'Rise of the Colossals', assignment: 82787, unlock: 82157 },
+  { name: 'Shadows Below', assignment: 81691, unlock: 82155 },
+  { name: 'Titanic Resurgence', assignment: 81647, unlock: 82154 },
+  { name: 'Titanic Resurgence 2', assignment: 81649, unlock: 83069 },
+  { name: 'Titanic Resurgence 3', assignment: 81650, unlock: 83070 },
+  { name: 'When the Deeps Stir', assignment: 83229, unlock: 82156 },
+  // 11.1 Undermine
+  { name: 'Boom! Headshot!', assignment: 85487, unlock: 85489 },
+  { name: 'Security Detail', assignment: 85488, unlock: 85490 },
+  // 11.2 K'aresh
+  { name: 'Overshadowed', assignment: 89293, unlock: 91193 },
+  { name: 'Aligned Views', assignment: 89294, unlock: 91203 },
+];
+const SA_ASSIGNMENT_IDS = new Set(SA_DEFINITIONS.map((d) => d.assignment));
+const SA_UNLOCK_TO_DEF = new Map(SA_DEFINITIONS.map((d) => [d.unlock, d]));
+
 /**
  * Extract blizzardId from addon Player GUID format: "Player-{realmId}-{hexCharId}"
  * The hex portion is the same numeric ID the Blizzard API returns for the character.
@@ -427,7 +451,7 @@ export function extractWeeklyProgress(
 ): WeeklyProgress {
   const result: WeeklyProgress = {
     prey: countPreyByDifficulty(completedQuests, charData),
-    specialAssignments: [],
+    specialAssignments: extractSpecialAssignments(charData, completedQuests),
     dungeonWeeklies: [],
     delves: [],
   };
@@ -435,22 +459,13 @@ export function extractWeeklyProgress(
   if (!charData.progressQuests?.length) return result;
 
   for (const pq of charData.progressQuests) {
-    // Skip prey quests — handled by countPreyByDifficulty
+    // Skip prey and SA quests — handled separately
     if (pq.name.startsWith('Prey:')) continue;
+    if (pq.name.startsWith('Special Assignment')) continue;
 
-    const completed =
-      pq.status === 2 ||
-      (pq.objectives.length > 0 &&
-        pq.objectives.some((obj) => obj.need > 0) &&
-        pq.objectives.every((obj) => obj.need === 0 || obj.have >= obj.need));
+    const completed = isQuestCompleted(pq);
 
-    if (pq.name.startsWith('Special Assignment')) {
-      result.specialAssignments.push({
-        questId: pq.questId,
-        name: pq.name,
-        completed,
-      });
-    } else if (
+    if (
       pq.name.includes('Delver') ||
       pq.name.includes('Delve')
     ) {
@@ -467,6 +482,79 @@ export function extractWeeklyProgress(
         questId: pq.questId,
         name: pq.name,
         completed,
+      });
+    }
+  }
+
+  return result;
+}
+
+function isQuestCompleted(pq: { status: number; objectives: Array<{ have: number; need: number }> }): boolean {
+  return (
+    pq.status === 2 ||
+    (pq.objectives.length > 0 &&
+      pq.objectives.some((obj) => obj.need > 0) &&
+      pq.objectives.every((obj) => obj.need === 0 || obj.have >= obj.need))
+  );
+}
+
+/**
+ * Build SA list from completedQuestsSquish + progressQuests.
+ * - Completed SAs: assignment quest ID found in completedQuestsSquish
+ * - In-progress SAs: unlock quest in progressQuests with partial objective progress
+ * - Dedup: if assignment is completed, don't also show the in-progress unlock
+ */
+function extractSpecialAssignments(
+  charData: AddonCharacter,
+  completedQuests: Set<number>,
+): WeeklyProgress['specialAssignments'] {
+  const result: WeeklyProgress['specialAssignments'] = [];
+  const handledNames = new Set<string>();
+
+  // 1. Check completedQuestsSquish for finished SA assignments
+  for (const def of SA_DEFINITIONS) {
+    if (completedQuests.has(def.assignment)) {
+      result.push({
+        questId: def.assignment,
+        name: `SA: ${def.name}`,
+        completed: true,
+      });
+      handledNames.add(def.name.toLowerCase());
+    }
+  }
+
+  // 2. Check progressQuests for in-progress SA unlock/assignment quests
+  //    Dedup by tracking quest IDs and SA names we've already added
+  const handledQuestIds = new Set(result.map((r) => r.questId));
+
+  if (charData.progressQuests) {
+    for (const pq of charData.progressQuests) {
+      if (!pq.name.startsWith('Special Assignment')) continue;
+      // Skip if this exact quest ID already handled
+      if (handledQuestIds.has(pq.questId)) continue;
+      // Skip if this is a known SA whose assignment is already tracked
+      const defByUnlock = SA_UNLOCK_TO_DEF.get(pq.questId);
+      if (defByUnlock && handledNames.has(defByUnlock.name.toLowerCase())) continue;
+      // Skip if this is an assignment quest ID whose SA is already tracked
+      if (SA_ASSIGNMENT_IDS.has(pq.questId)) {
+        const def = SA_DEFINITIONS.find((d) => d.assignment === pq.questId);
+        if (def && handledNames.has(def.name.toLowerCase())) continue;
+      }
+      // Dedup by stripped SA name (handles unlock + twwSpecialAssignment overlap)
+      const strippedName = pq.name.replace(/^Special Assignment:\s*/, '').toLowerCase();
+      if (handledNames.has(strippedName)) continue;
+      handledNames.add(strippedName);
+      handledQuestIds.add(pq.questId);
+
+      const completed = isQuestCompleted(pq);
+      const primaryObj = pq.objectives.find((o) => o.need > 0);
+
+      result.push({
+        questId: pq.questId,
+        name: pq.name,
+        completed,
+        have: primaryObj?.have,
+        need: primaryObj?.need,
       });
     }
   }
