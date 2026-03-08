@@ -141,6 +141,7 @@ export const weeklyActivities = pgTable(
     keystoneLevel: integer('keystone_level'),
     lockouts: jsonb('lockouts').$type<Lockout[]>(),
     delvesGilded: integer('delves_gilded'),
+    preyHuntsCompleted: integer('prey_hunts_completed'),
     syncedAt: timestamp('synced_at', tz),
     createdAt: timestamp('created_at', tz).defaultNow().notNull(),
   },

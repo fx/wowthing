@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('~/db', () => ({ db: {} }));
 
-import { WEEKLY_QUEST_IDS, extractBlizzardId, extractRealmSlug } from '../processor';
+import { WEEKLY_QUEST_IDS, countPreyHunts, extractBlizzardId, extractRealmSlug } from '../processor';
+import type { AddonCharacter } from '../schema';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
 // These are internal to processor.ts, so we test the exported behavior indirectly
@@ -348,6 +349,44 @@ describe('processor logic', () => {
     it('WEEKLY_QUEST_IDS does not contain random quest IDs', () => {
       expect(WEEKLY_QUEST_IDS.has(99999)).toBe(false);
       expect(WEEKLY_QUEST_IDS.has(0)).toBe(false);
+    });
+  });
+
+  describe('countPreyHunts', () => {
+    function makeChar(progressQuests?: AddonCharacter['progressQuests']): AddonCharacter {
+      return { progressQuests } as AddonCharacter;
+    }
+
+    it('returns 0 when no progressQuests', () => {
+      expect(countPreyHunts(makeChar())).toBe(0);
+      expect(countPreyHunts(makeChar([]))).toBe(0);
+    });
+
+    it('counts completed prey hunts', () => {
+      const char = makeChar([
+        { key: 'q1', questId: 91096, name: 'Prey: Magistrix Emberlash (Normal)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 1, need: 1 }] },
+        { key: 'q2', questId: 91224, name: 'Prey: Nexus-Edge Hadim (Hard)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 0, need: 1 }] },
+      ]);
+      expect(countPreyHunts(char)).toBe(1);
+    });
+
+    it('ignores non-prey quests', () => {
+      const char = makeChar([
+        { key: 'q1', questId: 92177, name: 'One Hero\'s Prey', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Prey Hunt completed', have: 1, need: 1 }] },
+        { key: 'q2', questId: 91096, name: 'Prey: Magistrix Emberlash (Normal)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 1, need: 1 }] },
+      ]);
+      // Only "Prey: ..." quests count, not "One Hero's Prey"
+      expect(countPreyHunts(char)).toBe(1);
+    });
+
+    it('counts multiple completed hunts', () => {
+      const char = makeChar([
+        { key: 'q1', questId: 91096, name: 'Prey: Target A (Normal)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 1, need: 1 }] },
+        { key: 'q2', questId: 91097, name: 'Prey: Target B (Normal)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 1, need: 1 }] },
+        { key: 'q3', questId: 91098, name: 'Prey: Target C (Hard)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 1, need: 1 }] },
+        { key: 'q4', questId: 91099, name: 'Prey: Target D (Hard)', status: 1, expires: 0, objectives: [{ type: 'monster', text: 'Hunt Prey', have: 0, need: 1 }] },
+      ]);
+      expect(countPreyHunts(char)).toBe(3);
     });
   });
 

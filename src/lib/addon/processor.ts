@@ -277,6 +277,10 @@ async function processCharacterWeekly(
     (vaultRaid?.some((s) => s.progress >= s.threshold) ?? false) ||
     (vaultWorld?.some((s) => s.progress >= s.threshold) ?? false);
 
+  // Count completed prey hunts from progressQuests
+  // Prey quests have names starting with "Prey:" and objectives with "Hunt Prey" text
+  const preyHuntsCompleted = countPreyHunts(charData);
+
   // Parse lockouts
   const lockouts: Lockout[] | undefined = charData.lockouts
     ?.map((l) => ({
@@ -301,6 +305,7 @@ async function processCharacterWeekly(
       keystoneLevel: charData.keystoneLevel ?? null,
       lockouts: lockouts?.length ? lockouts : null,
       delvesGilded: charData.delvesGilded ?? null,
+      preyHuntsCompleted,
     })
     .onConflictDoUpdate({
       target: [weeklyActivities.characterId, weeklyActivities.resetWeek],
@@ -313,6 +318,7 @@ async function processCharacterWeekly(
         keystoneLevel: charData.keystoneLevel ?? null,
         lockouts: lockouts?.length ? lockouts : null,
         delvesGilded: charData.delvesGilded ?? null,
+        preyHuntsCompleted,
         syncedAt: new Date(),
       },
     });
@@ -332,6 +338,29 @@ export function extractRealmSlug(guildName: string): string | null {
     .replace(/[^a-z0-9]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+/**
+ * Count completed prey hunts from progressQuests.
+ * Prey hunts are quests named "Prey: ..." with an objective containing "Hunt Prey".
+ * A hunt is "completed" when the objective's have >= need (typically 1/1).
+ * The umbrella quest "One Hero's Prey" (92177) tracks the overall weekly count
+ * but individual "Prey: ..." quests give a more granular picture.
+ */
+export function countPreyHunts(charData: AddonCharacter): number {
+  if (!charData.progressQuests?.length) return 0;
+
+  let count = 0;
+  for (const pq of charData.progressQuests) {
+    // Match individual prey hunt quests: "Prey: <target> (Normal|Hard|Nightmare)"
+    if (!pq.name.startsWith('Prey:')) continue;
+    // Check if hunt objective is completed (have >= need)
+    const huntDone = pq.objectives.some(
+      (obj) => obj.need > 0 && obj.have >= obj.need,
+    );
+    if (huntDone) count++;
+  }
+  return count;
 }
 
 function parseVaultSlots(

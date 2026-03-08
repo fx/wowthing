@@ -109,6 +109,17 @@ function getCharActivityState(
   char: Character,
   activity: Activity,
 ): ActivityState {
+  // Prey hunts: use weeklyActivities.preyHuntsCompleted
+  if (activity.key === 'prey_hunts') {
+    const count = char.weeklyActivities?.[0]?.preyHuntsCompleted ?? 0;
+    const threshold = activity.threshold ?? 4;
+    return count >= threshold
+      ? 'complete'
+      : count > 0
+        ? 'in-progress'
+        : 'not-started';
+  }
+
   const completions = char.questCompletions ?? [];
   const matches = completions.filter((qc) =>
     activity.questIds?.includes(qc.questId),
@@ -142,7 +153,7 @@ function MobileWeeklyCard({
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Weekly Checklist</CardTitle>
+        <CardTitle className="text-sm">Weekly Objectives</CardTitle>
       </CardHeader>
       <CardContent className="px-3 pb-2">
         {characters.map((char) => (

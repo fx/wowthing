@@ -35,6 +35,8 @@ export function WeeklyChecklist({
       !a.key.startsWith('lockout_'),
   );
 
+  if (checklistActivities.length === 0) return null;
+
   return (
     <Card>
       <CardHeader className="py-2 px-3">
@@ -88,6 +90,23 @@ export function WeeklyChecklist({
 }
 
 function resolveActivityStatus(char: Character, activity: ActivityDef) {
+  // Prey hunts: use weeklyActivities.preyHuntsCompleted instead of quest completions
+  if (activity.key === 'prey_hunts') {
+    const weekly = char.weeklyActivities?.[0];
+    const count = weekly?.preyHuntsCompleted ?? 0;
+    const threshold = activity.threshold ?? 4;
+    const done = count >= threshold;
+    return {
+      state: done
+        ? ('complete' as const)
+        : count > 0
+          ? ('in-progress' as const)
+          : ('not-started' as const),
+      label: `${count}/${threshold}`,
+      tooltip: `${activity.name}: ${count}/${threshold}`,
+    };
+  }
+
   const completions = char.questCompletions ?? [];
   const matches = completions.filter((qc) =>
     activity.questIds?.includes(qc.questId),
@@ -116,7 +135,7 @@ function resolveActivityStatus(char: Character, activity: ActivityDef) {
   const done = matches.length > 0;
   return {
     state: done ? ('complete' as const) : ('not-started' as const),
-    label: undefined,
+    label: done ? '\u2713' : undefined,
     tooltip: `${activity.name}: ${done ? 'Complete' : 'Not started'}`,
   };
 }
