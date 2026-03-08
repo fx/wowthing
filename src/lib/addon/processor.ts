@@ -12,6 +12,20 @@ import { getCurrentResetWeek, getTodayDate } from '~/lib/activities/resets';
 import type { Region } from '~/lib/activities/resets';
 import type { AddonCharacter, AddonUpload } from './schema';
 
+/**
+ * Extract blizzardId from addon Player GUID format: "Player-{realmId}-{hexCharId}"
+ * The hex portion is the same numeric ID the Blizzard API returns for the character.
+ * Mirrors upstream wowthing-again: UserUploadJob.cs PlayerGuidRegex
+ */
+const PLAYER_GUID_REGEX = /^Player-\d+-([0-9A-Fa-f]+)$/;
+
+export function extractBlizzardId(addonKey: string): number | null {
+  const match = addonKey.match(PLAYER_GUID_REGEX);
+  if (!match) return null;
+  const id = parseInt(match[1], 16);
+  return Number.isFinite(id) ? id : null;
+}
+
 const DIFFICULTY_MAP: Record<number, Lockout['difficulty']> = {
   7: 'lfr',
   14: 'normal',
@@ -56,65 +70,32 @@ export async function processAddonUpload(
     where: inArray(characters.accountId, accountIds),
   });
 
-  // Build lookups for character matching
+  // Build lookup: blizzardId -> character+region
+  // Mirrors upstream wowthing-again which matches by converting the hex portion
+  // of the Player GUID to a decimal blizzardId.
   const charWithRegion = userCharacters.map((c) => {
     const acct = userAccounts.find((a) => a.id === c.accountId);
     return { character: c, region: acct?.region ?? 'us' };
   });
 
-  // Primary: match by name + realm slug (derived from addon guildName "region/realm/name")
-  const charByNameRealm = new Map(
-    charWithRegion.map((entry) => [
-      `${entry.character.name.toLowerCase()}|${entry.character.realmSlug.toLowerCase()}`,
-      entry,
-    ]),
-  );
-
-  // Fallback: match by blizzardId (numeric keys)
   const charByBlizzardId = new Map(
     charWithRegion.map((entry) => [entry.character.blizzardId, entry]),
   );
 
+  type CharEntry = (typeof charWithRegion)[number];
+  const addonMatches: Array<{ charData: AddonCharacter; match: CharEntry }> = [];
+
   for (const [charKey, charData] of Object.entries(upload.chars)) {
-    // Try to match the addon character to a DB character
-    let match: (typeof charWithRegion)[number] | undefined;
+    const blizzardId = extractBlizzardId(charKey);
+    if (blizzardId == null) continue;
 
-    // Strategy 1: Match by name + realm from guildName
-    if (charData.name && charData.guildName) {
-      const realmSlug = extractRealmSlug(charData.guildName);
-      if (realmSlug) {
-        match = charByNameRealm.get(
-          `${charData.name.toLowerCase()}|${realmSlug}`,
-        );
-      }
+    const match = charByBlizzardId.get(blizzardId);
+    if (match) {
+      addonMatches.push({ charData, match });
     }
+  }
 
-    // Strategy 2: If no name (active character), try matching unnamed chars
-    // by realm + level against unmatched DB characters
-    if (!match && !charData.name && charData.guildName) {
-      const realmSlug = extractRealmSlug(charData.guildName);
-      if (realmSlug && charData.level) {
-        // Find DB characters on same realm at same level that haven't been matched yet
-        const candidates = charWithRegion.filter(
-          (entry) =>
-            entry.character.realmSlug.toLowerCase() === realmSlug &&
-            entry.character.level === charData.level,
-        );
-        if (candidates.length === 1) {
-          match = candidates[0];
-        }
-      }
-    }
-
-    // Strategy 3: Numeric blizzardId key (legacy format)
-    if (!match) {
-      const blizzardId = Number.parseInt(charKey);
-      if (!Number.isNaN(blizzardId)) {
-        match = charByBlizzardId.get(blizzardId);
-      }
-    }
-
-    if (!match) continue;
+  for (const { charData, match } of addonMatches) {
 
     const { character, region } = match;
     const regionTyped = region as Region;

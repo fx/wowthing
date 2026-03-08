@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('~/db', () => ({ db: {} }));
 
-import { WEEKLY_QUEST_IDS, extractRealmSlug } from '../processor';
+import { WEEKLY_QUEST_IDS, extractBlizzardId, extractRealmSlug } from '../processor';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
 // These are internal to processor.ts, so we test the exported behavior indirectly
@@ -348,6 +348,32 @@ describe('processor logic', () => {
     it('WEEKLY_QUEST_IDS does not contain random quest IDs', () => {
       expect(WEEKLY_QUEST_IDS.has(99999)).toBe(false);
       expect(WEEKLY_QUEST_IDS.has(0)).toBe(false);
+    });
+  });
+
+  describe('extractBlizzardId', () => {
+    it('extracts decimal blizzardId from Player GUID hex portion', () => {
+      // Player-{realmId}-{hexCharId} -> decimal conversion of hex portion
+      expect(extractBlizzardId('Player-1168-0A813ABB')).toBe(0x0a813abb);
+      expect(extractBlizzardId('Player-3694-0A50BEBC')).toBe(0x0a50bebc);
+    });
+
+    it('handles uppercase and lowercase hex', () => {
+      expect(extractBlizzardId('Player-1168-0a813abb')).toBe(0x0a813abb);
+      expect(extractBlizzardId('Player-1168-0A813ABB')).toBe(0x0a813abb);
+    });
+
+    it('returns null for non-Player GUID keys', () => {
+      expect(extractBlizzardId('12345')).toBeNull();
+      expect(extractBlizzardId('abc')).toBeNull();
+      expect(extractBlizzardId('')).toBeNull();
+    });
+
+    it('returns null for malformed Player GUIDs', () => {
+      expect(extractBlizzardId('Player-')).toBeNull();
+      expect(extractBlizzardId('Player-1168')).toBeNull();
+      expect(extractBlizzardId('Player-1168-')).toBeNull();
+      expect(extractBlizzardId('Player-1168-ZZZZ')).toBeNull();
     });
   });
 
