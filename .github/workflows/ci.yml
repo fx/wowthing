@@ -8,10 +8,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install
+      - run: bun install --frozen-lockfile
         env:
           BUN_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: bun run test
