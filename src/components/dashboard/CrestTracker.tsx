@@ -40,20 +40,8 @@ export function CrestTracker({
                       (c) => c.currencyId === tier.currencyId,
                     );
 
-                    if (!currency || currency.weekMax == null) {
-                      return (
-                        <StatusCell
-                          key={char.id}
-                          state="not-started"
-                          label={'\u2014'}
-                          tooltip={`${char.name} ${tier.name}: \u2014`}
-                          collapsed={isCollapsed(char.id)}
-                        />
-                      );
-                    }
-
-                    const weekQty = currency.weekQuantity ?? 0;
-                    const weekMax = currency.weekMax;
+                    const weekQty = currency?.weekQuantity ?? 0;
+                    const weekMax = currency?.weekMax ?? tier.weeklyCap;
                     const pct = weekMax > 0 ? weekQty / weekMax : 0;
                     const state =
                       pct >= 1
@@ -65,7 +53,7 @@ export function CrestTracker({
                       <StatusCell
                         key={char.id}
                         state={state}
-                        label={`${weekQty}`}
+                        label={`${weekQty}/${weekMax}`}
                         tooltip={`${char.name} ${tier.name}: ${weekQty}/${weekMax}`}
                         collapsed={isCollapsed(char.id)}
                       />
