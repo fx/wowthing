@@ -1,4 +1,13 @@
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest';
+
+vi.mock('~/db', () => ({ db: {} }));
+vi.mock('~/lib/auth/middleware', () => ({
+  authMiddleware: {},
+}));
+vi.mock('~/server/plugins/pg-boss', () => ({
+  getBossAsync: vi.fn(),
+}));
+
 import { parseAddonUpload } from '../upload';
 
 describe('parseAddonUpload', () => {
