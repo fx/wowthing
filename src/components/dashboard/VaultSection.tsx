@@ -133,8 +133,14 @@ function VaultDots({
       {thresholds.map((threshold, i) => {
         const slot = slots?.[i];
         const filled = slot != null && slot.progress >= slot.threshold;
+        const displayLevel =
+          slot?.itemLevel && slot.itemLevel > 0
+            ? slot.itemLevel
+            : slot?.level && slot.level > 0
+              ? slot.level
+              : null;
         const tooltipText = slot
-          ? `${slot.progress}/${slot.threshold} \u2014 ilvl ${slot.itemLevel}`
+          ? `${slot.progress}/${slot.threshold}${displayLevel != null ? ` \u2014 ilvl ${displayLevel}` : ''}`
           : `0/${threshold}`;
         return (
           <Tooltip key={`slot-${threshold}`}>
