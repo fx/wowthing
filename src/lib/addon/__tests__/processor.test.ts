@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { WEEKLY_QUEST_IDS } from '../processor';
 
 // Test the DIFFICULTY_MAP logic and parseVaultSlots logic
 // These are internal to processor.ts, so we test the exported behavior indirectly
@@ -325,6 +326,37 @@ describe('processor logic', () => {
         .map((k) => parseInt(k, 10))
         .filter((id) => Number.isFinite(id));
       expect(questIds).toEqual([93890, 93751]);
+    });
+
+    it('only includes allowlisted quest IDs from questsV2', () => {
+      const questsV2: Record<string, number> = {
+        '93890': 1, // Unity quest — allowlisted
+        '93751': 1, // Dungeon weekly — allowlisted
+        '12345': 1, // Random quest — NOT allowlisted
+        '99999': 1, // Random quest — NOT allowlisted
+      };
+      const questIds = Object.keys(questsV2)
+        .map((k) => parseInt(k, 10))
+        .filter((id) => Number.isFinite(id))
+        .filter((id) => WEEKLY_QUEST_IDS.has(id));
+      expect(questIds).toEqual([93890, 93751]);
+    });
+
+    it('WEEKLY_QUEST_IDS contains known quest IDs from seeds', () => {
+      // Unity quests
+      expect(WEEKLY_QUEST_IDS.has(93890)).toBe(true);
+      expect(WEEKLY_QUEST_IDS.has(93767)).toBe(true);
+      // Hope quest
+      expect(WEEKLY_QUEST_IDS.has(95468)).toBe(true);
+      // Special assignment quest IDs
+      expect(WEEKLY_QUEST_IDS.has(91390)).toBe(true);
+      // Unlock quest IDs
+      expect(WEEKLY_QUEST_IDS.has(94865)).toBe(true);
+      // Dungeon weekly
+      expect(WEEKLY_QUEST_IDS.has(93751)).toBe(true);
+      expect(WEEKLY_QUEST_IDS.has(93758)).toBe(true);
+      // Non-existent quest should not be in set
+      expect(WEEKLY_QUEST_IDS.has(99999)).toBe(false);
     });
   });
 });

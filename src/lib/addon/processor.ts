@@ -23,6 +23,22 @@ const DIFFICULTY_MAP: Record<number, Lockout['difficulty']> = {
 /** Dawncrest currency IDs that use isMovingMax tracking */
 const MOVING_MAX_CURRENCY_IDS = new Set([3383, 3341, 3343, 3345, 3348]);
 
+/** Known weekly activity quest IDs from seeds/activities.yaml.
+ *  Only these IDs are persisted from questsV2 to avoid bloating
+ *  the quest_completions table with thousands of irrelevant quests. */
+export const WEEKLY_QUEST_IDS = new Set([
+  // Unity quests
+  93890, 93767, 94457, 93909, 93911, 93769, 93891, 93910, 93912, 93889, 93892, 93913, 93766,
+  // Hope in the Darkest Corners
+  95468,
+  // Special assignment quest IDs
+  91390, 91796, 92063, 92139, 92145, 93013, 93244, 93438,
+  // Special assignment unlock quest IDs
+  94865, 94866, 94390, 95435, 92848, 94391, 94795, 94743,
+  // Dungeon weekly
+  93751, 93752, 93753, 93754, 93755, 93756, 93757, 93758,
+]);
+
 export async function processAddonUpload(
   userId: number,
   upload: AddonUpload,
@@ -188,7 +204,10 @@ async function processCharacterQuests(
 
   // Account-wide quests from questsV2 — store as weekly completions
   if (questsV2) {
-    const questIds = Object.keys(questsV2).map((k) => parseInt(k, 10)).filter((id) => Number.isFinite(id));
+    const questIds = Object.keys(questsV2)
+      .map((k) => parseInt(k, 10))
+      .filter((id) => Number.isFinite(id))
+      .filter((id) => WEEKLY_QUEST_IDS.has(id));
     if (questIds.length > 0) {
       const existingAccountQuests = await db
         .select({ questId: questCompletions.questId })
