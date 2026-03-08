@@ -22,13 +22,13 @@ const currencyStringSchema = z
     const [qty, max, isWeekly, weekQty, weekMax, isMovingMax, totalQty] =
       s.split(':');
     return {
-      quantity: parseInt(qty, 10),
-      max: parseInt(max, 10),
+      quantity: Number.parseInt(qty, 10),
+      max: Number.parseInt(max, 10),
       isWeekly: isWeekly === '1',
-      weekQuantity: parseInt(weekQty, 10),
-      weekMax: parseInt(weekMax, 10),
+      weekQuantity: Number.parseInt(weekQty, 10),
+      weekMax: Number.parseInt(weekMax, 10),
       isMovingMax: isMovingMax === '1',
-      totalQuantity: parseInt(totalQty, 10),
+      totalQuantity: Number.parseInt(totalQty, 10),
     };
   });
 
@@ -41,9 +41,9 @@ const progressQuestSchema = z
       if (parts.length < 5) return false;
       const [, questId, , status, expires] = parts;
       return (
-        Number.isFinite(parseInt(questId)) &&
-        Number.isFinite(parseInt(status)) &&
-        Number.isFinite(parseInt(expires))
+        Number.isFinite(Number.parseInt(questId)) &&
+        Number.isFinite(Number.parseInt(status)) &&
+        Number.isFinite(Number.parseInt(expires))
       );
     },
     { message: 'Invalid progress quest string' },
@@ -59,17 +59,17 @@ const progressQuestSchema = z
             return {
               type,
               text,
-              have: parseInt(have) || 0,
-              need: parseInt(need) || 0,
+              have: Number.parseInt(have) || 0,
+              need: Number.parseInt(need) || 0,
             };
           })
       : [];
     return {
       key,
-      questId: parseInt(questId),
+      questId: Number.parseInt(questId),
       name,
-      status: parseInt(status),
-      expires: parseInt(expires),
+      status: Number.parseInt(status),
+      expires: Number.parseInt(expires),
       objectives,
     };
   });
@@ -85,6 +85,14 @@ const lockoutSchema = z.object({
   bosses: z.array(z.string()).optional(),
 });
 
+const vaultSlotSchema = z.object({
+  threshold: z.number(),
+  progress: z.number(),
+  level: z.number().optional(),
+  tier: z.number().optional(),
+  rewards: z.any().optional(),
+});
+
 const uploadCharacterSchema = z.object({
   level: z.number().optional(),
   copper: z.number().optional(),
@@ -97,13 +105,15 @@ const uploadCharacterSchema = z.object({
   dailyQuests: z.array(z.number()).optional(),
   otherQuests: z.array(z.number()).optional(),
   lockouts: z.array(lockoutSchema).optional(),
-  vault: z.record(z.string(), z.array(z.any())).optional(),
+  vault: z.record(z.string(), z.array(vaultSlotSchema)).optional(),
+  delvesGilded: z.number().optional(),
   scanTimes: z.record(z.string(), z.number()).optional(),
 });
 
 export const uploadSchema = z.object({
   version: z.number(),
   chars: z.record(z.string(), uploadCharacterSchema),
+  questsV2: z.record(z.string(), z.number()).optional(),
 });
 
 export type AddonUpload = z.infer<typeof uploadSchema>;
