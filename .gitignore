@@ -8,3 +8,4 @@ dist/
 .DS_Store
 .tailscale/
 test-results/
+playwright-report/

@@ -12,4 +12,7 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
   },
+  test: {
+    exclude: ['e2e/**', 'node_modules/**'],
+  },
 });
