@@ -23,24 +23,6 @@ export const DIFF_SHORT: Record<string, string> = {
   mythic: 'M',
 };
 
-export const WEEKLY_QUESTS = {
-  unity: {
-    name: 'Unity Quest',
-    questIds: [93890, 93767, 94457],
-  },
-  specialAssignment1: {
-    name: 'Special Assignment 1',
-    questIds: [91390, 91796, 92063],
-  },
-  specialAssignment2: {
-    name: 'Special Assignment 2',
-    questIds: [91390, 91796, 92063],
-  },
-  dungeonWeekly: {
-    name: 'Dungeon Weekly',
-    questIds: [93751, 93752, 93753, 93754, 93755, 93756, 93757, 93758],
-  },
-} as const;
 
 export const VAULT_THRESHOLDS = {
   mythicPlus: { tier: 't1', thresholds: [1, 4, 8], label: 'Mythic+' },
