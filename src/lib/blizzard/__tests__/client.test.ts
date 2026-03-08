@@ -24,7 +24,7 @@ describe('BlizzardClient', () => {
     expect(result.notModified).toBe(false);
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://us.api.blizzard.com/test',
+      'https://us.api.blizzard.com/test?namespace=profile-us',
       { headers: { Authorization: 'Bearer test-token' } },
     );
   });
@@ -39,7 +39,7 @@ describe('BlizzardClient', () => {
     await client.fetch('/test', testSchema, 'Thu, 01 Jan 2026 00:00:00 GMT');
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://eu.api.blizzard.com/test',
+      'https://eu.api.blizzard.com/test?namespace=profile-eu',
       {
         headers: {
           Authorization: 'Bearer token',
@@ -115,7 +115,7 @@ describe('BlizzardClient', () => {
       await client.fetch('/path', testSchema);
 
       expect(globalThis.fetch).toHaveBeenLastCalledWith(
-        `${expectedHosts[region]}/path`,
+        `${expectedHosts[region]}/path?namespace=profile-${region}`,
         expect.any(Object),
       );
     }
