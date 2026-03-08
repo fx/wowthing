@@ -1,6 +1,6 @@
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
 import { CharacterName } from '~/components/shared/CharacterName';
-import type { VaultSlot } from '~/db/types';
+import type { VaultSlot, WeeklyProgress } from '~/db/types';
 import { type ActivityState, CELL_COLORS, cn } from '~/lib/utils';
 import type { DashboardData } from '~/server/functions/activities';
 import {
@@ -25,13 +25,12 @@ export function MobileDashboard({
   activities,
   renown,
 }: MobileDashboardProps) {
-  const weeklyActivities = activities.filter((a) => a.category === 'weekly');
   const dailyActivities = activities.filter((a) => a.category === 'daily');
 
   return (
     <div className="space-y-3">
       <MobileVaultCard characters={characters} />
-      <MobileWeeklyCard characters={characters} activities={weeklyActivities} />
+      <MobileWeeklyCard characters={characters} />
       <MobileCrestCard characters={characters} />
       <MobileKeystoneCard characters={characters} />
       <MobileDelveCard characters={characters} />
@@ -105,50 +104,56 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
   );
 }
 
-function getCharActivityState(
-  char: Character,
-  activity: Activity,
-): ActivityState {
-  // Prey hunts: use weeklyActivities.preyHuntsCompleted
-  if (activity.key === 'prey_hunts') {
-    const count = char.weeklyActivities?.[0]?.preyHuntsCompleted ?? 0;
-    const threshold = activity.threshold ?? 4;
-    return count >= threshold
-      ? 'complete'
-      : count > 0
-        ? 'in-progress'
-        : 'not-started';
-  }
+const MOBILE_WEEKLY_ROWS = [
+  { key: 'prey', label: 'Prey' },
+  { key: 'special_assignments', label: 'SA' },
+  { key: 'dungeon_weeklies', label: 'Dungeon' },
+  { key: 'delves', label: 'Delves' },
+] as const;
 
-  const completions = char.questCompletions ?? [];
-  const matches = completions.filter((qc) =>
-    activity.questIds?.includes(qc.questId),
-  );
+function getMobileWeeklyState(char: Character, rowKey: string): ActivityState {
+  const weekly = char.weeklyActivities?.[0];
+  const wp = weekly?.weeklyProgress as WeeklyProgress | null | undefined;
 
-  if (activity.accountWide && matches.length > 0) return 'account-done';
-  if (activity.threshold && activity.threshold > 1) {
-    return matches.length >= activity.threshold
-      ? 'complete'
-      : matches.length > 0
-        ? 'in-progress'
-        : 'not-started';
+  switch (rowKey) {
+    case 'prey': {
+      const count = weekly?.preyHuntsCompleted ?? 0;
+      return count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'special_assignments': {
+      const sas = wp?.specialAssignments ?? [];
+      if (sas.length === 0) return 'not-started';
+      const completed = sas.filter((s) => s.completed).length;
+      return completed === sas.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'dungeon_weeklies': {
+      const dws = wp?.dungeonWeeklies ?? [];
+      if (dws.length === 0) return 'not-started';
+      const completed = dws.filter((d) => d.completed).length;
+      return completed === dws.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
+    }
+    case 'delves': {
+      const dvs = wp?.delves ?? [];
+      if (dvs.length === 0) return 'not-started';
+      const completed = dvs.filter((d) => d.completed).length;
+      return completed === dvs.length ? 'complete' : completed > 0 ? 'in-progress' : 'not-started';
+    }
+    default: return 'not-started';
   }
-  return matches.length > 0 ? 'complete' : 'not-started';
 }
 
-function MobileWeeklyCard({
-  characters,
-  activities,
-}: {
-  characters: Character[];
-  activities: Activity[];
-}) {
-  const checklistActivities = activities.filter(
-    (a) =>
-      !a.key.startsWith('vault_') &&
-      !a.key.startsWith('dawncrest_') &&
-      !a.key.startsWith('lockout_'),
-  );
+function MobileWeeklyCard({ characters }: { characters: Character[] }) {
+  const hasAnyData = characters.some((char) => {
+    const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
+    return wp && (
+      wp.preyHunts.length > 0 ||
+      wp.specialAssignments.length > 0 ||
+      wp.dungeonWeeklies.length > 0 ||
+      wp.delves.length > 0
+    );
+  });
+
+  if (!hasAnyData) return null;
 
   return (
     <Card>
@@ -158,20 +163,18 @@ function MobileWeeklyCard({
       <CardContent className="px-3 pb-2">
         {characters.map((char) => (
           <MobileCharacterRow key={char.id} character={char}>
-            {checklistActivities.map((activity) => {
-              const state = getCharActivityState(char, activity);
+            {MOBILE_WEEKLY_ROWS.map((row) => {
+              const state = getMobileWeeklyState(char, row.key);
               return (
                 <div
-                  key={activity.key}
+                  key={row.key}
                   className={cn(
                     'w-4 h-4 rounded-sm text-[9px] flex items-center justify-center',
                     CELL_COLORS[state],
                   )}
-                  title={activity.shortName}
+                  title={row.label}
                 >
-                  {state === 'complete' || state === 'account-done'
-                    ? '\u2713'
-                    : '\u2014'}
+                  {state === 'complete' ? '\u2713' : '\u2014'}
                 </div>
               );
             })}

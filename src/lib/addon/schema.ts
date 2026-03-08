@@ -50,18 +50,17 @@ const progressQuestSchema = z
   )
   .transform((s) => {
     const [key, questId, name, status, expires, ...objParts] = s.split('|');
-    const objectives = objParts.join('|')
-      ? objParts
-          .join('|')
-          .split('^')
+    const objStr = objParts.join('|');
+    const objectives = objStr
+      ? objStr
+          .split(/_(?=(?:monster|object|item|event|progressbar);)/i)
           .map((obj) => {
-            const [type, text, have, need] = obj.split('~');
-            return {
-              type,
-              text,
-              have: Number.parseInt(have) || 0,
-              need: Number.parseInt(need) || 0,
-            };
+            const parts = obj.split(';');
+            const type = parts[0];
+            const need = Number.parseInt(parts[parts.length - 1]) || 0;
+            const have = Number.parseInt(parts[parts.length - 2]) || 0;
+            const text = parts.slice(1, -2).join(';');
+            return { type, text, have, need };
           })
       : [];
     return {

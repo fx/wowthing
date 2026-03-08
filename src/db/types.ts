@@ -13,3 +13,15 @@ export type Lockout = {
   bossesKilled: number;
   bossCount: number;
 };
+
+/** Categorized weekly progress extracted from addon progressQuests */
+export type WeeklyProgress = {
+  /** Individual prey hunt quests: name -> completed */
+  preyHunts: Array<{ name: string; completed: boolean }>;
+  /** Special assignment quests with completion status */
+  specialAssignments: Array<{ questId: number; name: string; completed: boolean }>;
+  /** Dungeon-specific weekly quests */
+  dungeonWeeklies: Array<{ questId: number; name: string; completed: boolean }>;
+  /** Delve completion quests */
+  delves: Array<{ questId: number; name: string; completed: boolean }>;
+};

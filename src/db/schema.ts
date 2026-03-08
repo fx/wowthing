@@ -142,6 +142,7 @@ export const weeklyActivities = pgTable(
     lockouts: jsonb('lockouts').$type<Lockout[]>(),
     delvesGilded: integer('delves_gilded'),
     preyHuntsCompleted: integer('prey_hunts_completed'),
+    weeklyProgress: jsonb('weekly_progress').$type<import('./types').WeeklyProgress>(),
     syncedAt: timestamp('synced_at', tz),
     createdAt: timestamp('created_at', tz).defaultNow().notNull(),
   },

@@ -8,34 +8,49 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@fx/ui';
+import type { WeeklyProgress } from '~/db/types';
 import type { DashboardData } from '~/server/functions/activities';
+import type { ActivityState } from '~/lib/utils';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
 
 type Character = DashboardData['characters'][number];
-type ActivityDef = DashboardData['activities'][number];
 
 interface WeeklyChecklistProps {
   characters: Character[];
-  activities: ActivityDef[];
   collapsedColumns: Set<string>;
   onToggleCollapse: (id: string) => void;
 }
 
+/** Rows to display in the weekly objectives grid */
+const WEEKLY_ROWS = [
+  { key: 'prey', label: 'Prey', tooltip: 'Complete prey hunts (4 per week max)' },
+  { key: 'special_assignments', label: 'SA', tooltip: 'Special Assignments' },
+  { key: 'dungeon_weeklies', label: 'Dungeon', tooltip: 'Dungeon weekly quests' },
+  { key: 'delves', label: 'Delves', tooltip: 'Delve completion quests' },
+] as const;
+
 export function WeeklyChecklist({
   characters,
-  activities,
   collapsedColumns,
   onToggleCollapse,
 }: WeeklyChecklistProps) {
-  const checklistActivities = activities.filter(
-    (a) =>
-      !a.key.startsWith('vault_') &&
-      !a.key.startsWith('dawncrest_') &&
-      !a.key.startsWith('lockout_'),
+  // Only show rows where at least one character has data
+  const activeRows = WEEKLY_ROWS.filter((row) =>
+    characters.some((char) => {
+      const wp = char.weeklyActivities?.[0]?.weeklyProgress as WeeklyProgress | null | undefined;
+      if (!wp) return false;
+      switch (row.key) {
+        case 'prey': return (char.weeklyActivities?.[0]?.preyHuntsCompleted ?? 0) > 0 || wp.preyHunts.length > 0;
+        case 'special_assignments': return wp.specialAssignments.length > 0;
+        case 'dungeon_weeklies': return wp.dungeonWeeklies.length > 0;
+        case 'delves': return wp.delves.length > 0;
+        default: return false;
+      }
+    }),
   );
 
-  if (checklistActivities.length === 0) return null;
+  if (activeRows.length === 0) return null;
 
   return (
     <Card>
@@ -50,24 +65,22 @@ export function WeeklyChecklist({
         >
           {({ characters, isCollapsed }) => (
             <>
-              {checklistActivities.map((activity) => (
-                <tr key={activity.key}>
+              {activeRows.map((row) => (
+                <tr key={row.key}>
                   <td className="sticky left-0 z-10 bg-card p-2 text-sm">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span tabIndex={0}>{activity.shortName}</span>
+                          <span tabIndex={0}>{row.label}</span>
                         </TooltipTrigger>
-                        <TooltipContent>
-                          {activity.description ?? activity.name}
-                        </TooltipContent>
+                        <TooltipContent>{row.tooltip}</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </td>
                   {characters.map((char) => {
-                    const { state, label, tooltip } = resolveActivityStatus(
+                    const { state, label, tooltip } = resolveRowStatus(
                       char,
-                      activity,
+                      row.key,
                     );
                     return (
                       <StatusCell
@@ -89,53 +102,83 @@ export function WeeklyChecklist({
   );
 }
 
-function resolveActivityStatus(char: Character, activity: ActivityDef) {
-  // Prey hunts: use weeklyActivities.preyHuntsCompleted instead of quest completions
-  if (activity.key === 'prey_hunts') {
-    const weekly = char.weeklyActivities?.[0];
-    const count = weekly?.preyHuntsCompleted ?? 0;
-    const threshold = activity.threshold ?? 4;
-    const done = count >= threshold;
-    return {
-      state: done
-        ? ('complete' as const)
-        : count > 0
-          ? ('in-progress' as const)
-          : ('not-started' as const),
-      label: `${count}/${threshold}`,
-      tooltip: `${activity.name}: ${count}/${threshold}`,
-    };
-  }
+function resolveRowStatus(
+  char: Character,
+  rowKey: string,
+): { state: ActivityState; label: string | undefined; tooltip: string } {
+  const weekly = char.weeklyActivities?.[0];
+  const wp = weekly?.weeklyProgress as WeeklyProgress | null | undefined;
 
-  const completions = char.questCompletions ?? [];
-  const matches = completions.filter((qc) =>
-    activity.questIds?.includes(qc.questId),
-  );
+  switch (rowKey) {
+    case 'prey': {
+      const count = weekly?.preyHuntsCompleted ?? 0;
+      const total = wp?.preyHunts.length ?? 0;
+      const state: ActivityState =
+        count >= 4 ? 'complete' : count > 0 ? 'in-progress' : 'not-started';
+      return {
+        state,
+        label: total > 0 || count > 0 ? `${count}/${Math.max(total, 4)}` : undefined,
+        tooltip: `Prey Hunts: ${count} completed`,
+      };
+    }
 
-  if (activity.accountWide && matches.length > 0) {
-    return {
-      state: 'account-done' as const,
-      label: '\u2713',
-      tooltip: `${activity.name}: Done (account-wide)`,
-    };
+    case 'special_assignments': {
+      const sas = wp?.specialAssignments ?? [];
+      const completed = sas.filter((s) => s.completed).length;
+      const state: ActivityState =
+        sas.length === 0
+          ? 'not-started'
+          : completed === sas.length
+            ? 'complete'
+            : completed > 0
+              ? 'in-progress'
+              : 'not-started';
+      const names = sas.map((s) => `${s.completed ? '\u2713' : '\u2717'} ${s.name}`).join('\n');
+      return {
+        state,
+        label: sas.length > 0 ? `${completed}/${sas.length}` : undefined,
+        tooltip: sas.length > 0 ? `Special Assignments:\n${names}` : 'Special Assignments: None active',
+      };
+    }
+
+    case 'dungeon_weeklies': {
+      const dws = wp?.dungeonWeeklies ?? [];
+      const completed = dws.filter((d) => d.completed).length;
+      const state: ActivityState =
+        dws.length === 0
+          ? 'not-started'
+          : completed === dws.length
+            ? 'complete'
+            : completed > 0
+              ? 'in-progress'
+              : 'not-started';
+      const names = dws.map((d) => `${d.completed ? '\u2713' : '\u2717'} ${d.name}`).join('\n');
+      return {
+        state,
+        label: dws.length > 0 ? `${completed}/${dws.length}` : undefined,
+        tooltip: dws.length > 0 ? `Dungeon Weeklies:\n${names}` : 'Dungeon Weeklies: None active',
+      };
+    }
+
+    case 'delves': {
+      const dvs = wp?.delves ?? [];
+      const completed = dvs.filter((d) => d.completed).length;
+      const state: ActivityState =
+        dvs.length === 0
+          ? 'not-started'
+          : completed === dvs.length
+            ? 'complete'
+            : completed > 0
+              ? 'in-progress'
+              : 'not-started';
+      return {
+        state,
+        label: dvs.length > 0 ? `${completed}/${dvs.length}` : undefined,
+        tooltip: dvs.length > 0 ? `Delves: ${completed}/${dvs.length} complete` : 'Delves: None active',
+      };
+    }
+
+    default:
+      return { state: 'not-started', label: undefined, tooltip: '' };
   }
-  if (activity.threshold && activity.threshold > 1) {
-    const count = matches.length;
-    const done = count >= activity.threshold;
-    return {
-      state: done
-        ? ('complete' as const)
-        : count > 0
-          ? ('in-progress' as const)
-          : ('not-started' as const),
-      label: `${count}/${activity.threshold}`,
-      tooltip: `${activity.name}: ${count}/${activity.threshold}`,
-    };
-  }
-  const done = matches.length > 0;
-  return {
-    state: done ? ('complete' as const) : ('not-started' as const),
-    label: done ? '\u2713' : undefined,
-    tooltip: `${activity.name}: ${done ? 'Complete' : 'Not started'}`,
-  };
 }

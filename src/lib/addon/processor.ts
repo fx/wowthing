@@ -7,7 +7,7 @@ import {
   questCompletions,
   weeklyActivities,
 } from '~/db/schema';
-import type { Lockout, VaultSlot } from '~/db/types';
+import type { Lockout, VaultSlot, WeeklyProgress } from '~/db/types';
 import { getCurrentResetWeek, getTodayDate } from '~/lib/activities/resets';
 import type { Region } from '~/lib/activities/resets';
 import type { AddonCharacter, AddonUpload } from './schema';
@@ -277,9 +277,9 @@ async function processCharacterWeekly(
     (vaultRaid?.some((s) => s.progress >= s.threshold) ?? false) ||
     (vaultWorld?.some((s) => s.progress >= s.threshold) ?? false);
 
-  // Count completed prey hunts from progressQuests
-  // Prey quests have names starting with "Prey:" and objectives with "Hunt Prey" text
+  // Extract weekly progress from progressQuests
   const preyHuntsCompleted = countPreyHunts(charData);
+  const weeklyProgress = extractWeeklyProgress(charData);
 
   // Parse lockouts
   const lockouts: Lockout[] | undefined = charData.lockouts
@@ -306,6 +306,7 @@ async function processCharacterWeekly(
       lockouts: lockouts?.length ? lockouts : null,
       delvesGilded: charData.delvesGilded ?? null,
       preyHuntsCompleted,
+      weeklyProgress,
     })
     .onConflictDoUpdate({
       target: [weeklyActivities.characterId, weeklyActivities.resetWeek],
@@ -319,6 +320,7 @@ async function processCharacterWeekly(
         lockouts: lockouts?.length ? lockouts : null,
         delvesGilded: charData.delvesGilded ?? null,
         preyHuntsCompleted,
+        weeklyProgress,
         syncedAt: new Date(),
       },
     });
@@ -354,13 +356,67 @@ export function countPreyHunts(charData: AddonCharacter): number {
   for (const pq of charData.progressQuests) {
     // Match individual prey hunt quests: "Prey: <target> (Normal|Hard|Nightmare)"
     if (!pq.name.startsWith('Prey:')) continue;
-    // Check if hunt objective is completed (have >= need)
-    const huntDone = pq.objectives.some(
-      (obj) => obj.need > 0 && obj.have >= obj.need,
-    );
+    // Check if hunt objective is completed: status=2 OR have >= need
+    const huntDone =
+      pq.status === 2 ||
+      pq.objectives.some((obj) => obj.need > 0 && obj.have >= obj.need);
     if (huntDone) count++;
   }
   return count;
+}
+
+/**
+ * Extract categorized weekly progress from progressQuests.
+ * Categorizes quests into prey hunts, special assignments, dungeon weeklies, and delves.
+ * A quest is "completed" when status=2 OR all objectives with need>0 have have>=need.
+ */
+export function extractWeeklyProgress(charData: AddonCharacter): WeeklyProgress {
+  const result: WeeklyProgress = {
+    preyHunts: [],
+    specialAssignments: [],
+    dungeonWeeklies: [],
+    delves: [],
+  };
+
+  if (!charData.progressQuests?.length) return result;
+
+  for (const pq of charData.progressQuests) {
+    const completed =
+      pq.status === 2 ||
+      (pq.objectives.length > 0 &&
+        pq.objectives.some((obj) => obj.need > 0) &&
+        pq.objectives.every((obj) => obj.need === 0 || obj.have >= obj.need));
+
+    if (pq.name.startsWith('Prey:')) {
+      result.preyHunts.push({ name: pq.name, completed });
+    } else if (pq.name.startsWith('Special Assignment')) {
+      result.specialAssignments.push({
+        questId: pq.questId,
+        name: pq.name,
+        completed,
+      });
+    } else if (
+      pq.name.includes('Delver') ||
+      pq.name.includes('Delve')
+    ) {
+      result.delves.push({ questId: pq.questId, name: pq.name, completed });
+    } else if (
+      pq.name.includes('Windrunner Spire:') ||
+      pq.name.includes("Magisters' Terrace:") ||
+      pq.name.includes('Murder Row:') ||
+      pq.name.includes('Blinding Vale:') ||
+      pq.name.includes('Den of Nalorakk:') ||
+      pq.name.includes('Maisara Caverns:')
+    ) {
+      result.dungeonWeeklies.push({
+        questId: pq.questId,
+        name: pq.name,
+        completed,
+      });
+    }
+  }
+
+  return result;
 }
 
 function parseVaultSlots(

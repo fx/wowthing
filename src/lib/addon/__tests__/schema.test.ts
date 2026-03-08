@@ -88,7 +88,7 @@ describe('uploadSchema', () => {
       chars: {
         '12345': {
           progressQuests: [
-            'special-1|99001|Special Assignment: Undermine|1|1710000000|progress~Kill mobs~3~10^collect~Gather items~5~5',
+            'special-1|99001|Special Assignment: Undermine|1|1710000000|monster;3/10 Kill mobs;3;10_object;5/5 Gather items;5;5',
           ],
         },
       },
@@ -101,14 +101,14 @@ describe('uploadSchema', () => {
     expect(quest.status).toBe(1);
     expect(quest.objectives).toHaveLength(2);
     expect(quest.objectives[0]).toEqual({
-      type: 'progress',
-      text: 'Kill mobs',
+      type: 'monster',
+      text: '3/10 Kill mobs',
       have: 3,
       need: 10,
     });
     expect(quest.objectives[1]).toEqual({
-      type: 'collect',
-      text: 'Gather items',
+      type: 'object',
+      text: '5/5 Gather items',
       have: 5,
       need: 5,
     });

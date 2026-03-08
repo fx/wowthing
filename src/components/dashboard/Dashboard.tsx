@@ -31,7 +31,6 @@ export function Dashboard(props: DashboardData) {
     );
   }
 
-  const weeklyActivities = activities.filter((a) => a.category === 'weekly');
   const dailyActivities = activities.filter((a) => a.category === 'daily');
   const gridProps = {
     characters,
@@ -42,7 +41,7 @@ export function Dashboard(props: DashboardData) {
   return (
     <div className="space-y-4">
       <VaultSection {...gridProps} />
-      <WeeklyChecklist {...gridProps} activities={weeklyActivities} />
+      <WeeklyChecklist {...gridProps} />
       <CrestTracker {...gridProps} />
       <KeystoneDisplay {...gridProps} />
       <DelveProgress {...gridProps} />
