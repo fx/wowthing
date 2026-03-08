@@ -48,9 +48,10 @@ export const VAULT_THRESHOLDS = {
   world: { tier: 't6', thresholds: [2, 4, 8], label: 'World' },
 } as const;
 
+// Faction IDs from real addon data. Names are approximate — confirm via Blizzard API.
 export const MIDNIGHT_FACTIONS = [
-  { id: 2601, name: 'Silvermoon Court' },
-  { id: 2602, name: 'Amani Tribe' },
-  { id: 2603, name: "Hara'ti" },
-  { id: 2604, name: 'Singularity' },
+  { id: 2600, name: 'Faction 2600' },
+  { id: 2644, name: 'Faction 2644' },
+  { id: 2683, name: 'Faction 2683' },
+  { id: 2722, name: 'Faction 2722' },
 ] as const;
