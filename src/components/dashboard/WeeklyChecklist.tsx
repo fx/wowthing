@@ -38,7 +38,7 @@ export function WeeklyChecklist({
   return (
     <Card>
       <CardHeader className="py-2 px-3">
-        <CardTitle className="text-sm">Weekly Checklist</CardTitle>
+        <CardTitle className="text-sm">Weekly Objectives</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <MatrixGrid
