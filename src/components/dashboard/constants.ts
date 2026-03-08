@@ -1,0 +1,56 @@
+export const RAIDS = [
+  { instanceId: 1299, name: 'Windrunner Spire', bosses: 4 },
+  { instanceId: 1300, name: "Magisters' Terrace", bosses: 4 },
+  { instanceId: 1304, name: 'Murder Row', bosses: 4 },
+  { instanceId: 1309, name: 'The Blinding Vale', bosses: 4 },
+  { instanceId: 1311, name: 'Den of Nalorakk', bosses: 3 },
+  { instanceId: 1315, name: 'Maisara Caverns', bosses: 3 },
+] as const;
+
+export const DAWNCREST_TIERS = [
+  { currencyId: 3383, name: 'Adventurer', weeklyCap: 200 },
+  { currencyId: 3341, name: 'Veteran', weeklyCap: 200 },
+  { currencyId: 3343, name: 'Champion', weeklyCap: 200 },
+  { currencyId: 3345, name: 'Hero', weeklyCap: 200 },
+  { currencyId: 3348, name: 'Myth', weeklyCap: 200 },
+] as const;
+
+export const DIFFICULTIES = ['normal', 'heroic', 'mythic'] as const;
+
+export const DIFF_SHORT: Record<string, string> = {
+  normal: 'N',
+  heroic: 'H',
+  mythic: 'M',
+};
+
+export const WEEKLY_QUESTS = {
+  unity: {
+    name: 'Unity Quest',
+    questIds: [93890, 93767, 94457],
+  },
+  specialAssignment1: {
+    name: 'Special Assignment 1',
+    questIds: [91390, 91796, 92063],
+  },
+  specialAssignment2: {
+    name: 'Special Assignment 2',
+    questIds: [91390, 91796, 92063],
+  },
+  dungeonWeekly: {
+    name: 'Dungeon Weekly',
+    questIds: [93751, 93752, 93753, 93754, 93755, 93756, 93757, 93758],
+  },
+} as const;
+
+export const VAULT_THRESHOLDS = {
+  mythicPlus: { tier: 't1', thresholds: [1, 4, 8], label: 'Mythic+' },
+  raid: { tier: 't3', thresholds: [2, 4, 6], label: 'Raid' },
+  world: { tier: 't6', thresholds: [2, 4, 8], label: 'World' },
+} as const;
+
+export const MIDNIGHT_FACTIONS = [
+  { id: 2601, name: 'Silvermoon Court' },
+  { id: 2602, name: 'Amani Tribe' },
+  { id: 2603, name: "Hara'ti" },
+  { id: 2604, name: 'Singularity' },
+] as const;

@@ -1,35 +1,18 @@
-import { Card, CardHeader, CardTitle, CardContent, Badge } from '@fx/ui';
+import { Badge, Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
 import { CharacterName } from '~/components/shared/CharacterName';
-import { cn, CELL_COLORS, type ActivityState } from '~/lib/utils';
-import type { DashboardData } from '~/server/functions/activities';
 import type { VaultSlot } from '~/db/types';
+import { type ActivityState, CELL_COLORS, cn } from '~/lib/utils';
+import type { DashboardData } from '~/server/functions/activities';
+import {
+  DAWNCREST_TIERS,
+  DIFFICULTIES,
+  DIFF_SHORT,
+  MIDNIGHT_FACTIONS,
+  RAIDS,
+} from './constants';
 
 type Character = DashboardData['characters'][number];
 type Activity = DashboardData['activities'][number];
-
-const DAWNCREST_TIERS = [
-  { key: 'adventurer', id: 3383, name: 'Adv' },
-  { key: 'veteran', id: 3341, name: 'Vet' },
-  { key: 'champion', id: 3343, name: 'Chm' },
-  { key: 'hero', id: 3345, name: 'Hero' },
-  { key: 'myth', id: 3348, name: 'Myth' },
-] as const;
-
-const RAIDS = [
-  { id: 16340, name: 'Voidspire', bossCount: 6 },
-  { id: 16531, name: 'Dreamrift', bossCount: 1 },
-  { id: 16215, name: "Quel'Danes", bossCount: 2 },
-] as const;
-
-const DIFFICULTIES = ['normal', 'heroic', 'mythic'] as const;
-const DIFF_SHORT: Record<string, string> = { normal: 'N', heroic: 'H', mythic: 'M' };
-
-const MIDNIGHT_FACTIONS = [
-  { id: 2601, name: 'Silvermoon Court' },
-  { id: 2602, name: 'Amani Tribe' },
-  { id: 2603, name: "Hara'ti" },
-  { id: 2604, name: 'Singularity' },
-];
 
 interface MobileDashboardProps {
   characters: DashboardData['characters'];
@@ -37,7 +20,11 @@ interface MobileDashboardProps {
   renown: DashboardData['renown'];
 }
 
-export function MobileDashboard({ characters, activities, renown }: MobileDashboardProps) {
+export function MobileDashboard({
+  characters,
+  activities,
+  renown,
+}: MobileDashboardProps) {
   const weeklyActivities = activities.filter((a) => a.category === 'weekly');
   const dailyActivities = activities.filter((a) => a.category === 'daily');
 
@@ -103,7 +90,9 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
       <CardContent className="px-3 pb-2">
         {characters.map((char) => (
           <MobileCharacterRow key={char.id} character={char}>
-            <VaultDots slots={char.weeklyActivities?.[0]?.vaultDungeonProgress} />
+            <VaultDots
+              slots={char.weeklyActivities?.[0]?.vaultDungeonProgress}
+            />
             <span className="text-zinc-600">|</span>
             <VaultDots slots={char.weeklyActivities?.[0]?.vaultRaidProgress} />
             <span className="text-zinc-600">|</span>
@@ -115,7 +104,10 @@ function MobileVaultCard({ characters }: { characters: Character[] }) {
   );
 }
 
-function getCharActivityState(char: Character, activity: Activity): ActivityState {
+function getCharActivityState(
+  char: Character,
+  activity: Activity,
+): ActivityState {
   const completions = char.questCompletions ?? [];
   const matches = completions.filter((qc) =>
     activity.questIds?.includes(qc.questId),
@@ -123,7 +115,11 @@ function getCharActivityState(char: Character, activity: Activity): ActivityStat
 
   if (activity.accountWide && matches.length > 0) return 'account-done';
   if (activity.threshold && activity.threshold > 1) {
-    return matches.length >= activity.threshold ? 'complete' : matches.length > 0 ? 'in-progress' : 'not-started';
+    return matches.length >= activity.threshold
+      ? 'complete'
+      : matches.length > 0
+        ? 'in-progress'
+        : 'not-started';
   }
   return matches.length > 0 ? 'complete' : 'not-started';
 }
@@ -161,7 +157,9 @@ function MobileWeeklyCard({
                   )}
                   title={activity.shortName}
                 >
-                  {state === 'complete' || state === 'account-done' ? '\u2713' : '\u2014'}
+                  {state === 'complete' || state === 'account-done'
+                    ? '\u2713'
+                    : '\u2014'}
                 </div>
               );
             })}
@@ -183,16 +181,16 @@ function MobileCrestCard({ characters }: { characters: Character[] }) {
           <MobileCharacterRow key={char.id} character={char}>
             {DAWNCREST_TIERS.map((tier) => {
               const currency = char.currencies?.find(
-                (c) => c.currencyId === tier.id,
+                (c) => c.currencyId === tier.currencyId,
               );
               const weekQty = currency?.weekQuantity ?? 0;
-              const weekMax = currency?.weekMax ?? 100;
+              const weekMax = currency?.weekMax ?? tier.weeklyCap;
               const pct = weekMax > 0 ? weekQty / weekMax : 0;
               const state: ActivityState =
                 pct >= 1 ? 'complete' : pct > 0 ? 'in-progress' : 'not-started';
               return (
                 <div
-                  key={tier.key}
+                  key={tier.currencyId}
                   className={cn(
                     'w-4 h-4 rounded-sm text-[9px] flex items-center justify-center',
                     CELL_COLORS[state],
@@ -227,7 +225,10 @@ function MobileKeystoneCard({ characters }: { characters: Character[] }) {
           const level = weekly?.keystoneLevel;
           return (
             <MobileCharacterRow key={char.id} character={char}>
-              <Badge variant={level ? 'default' : 'outline'} className="text-xs">
+              <Badge
+                variant={level ? 'default' : 'outline'}
+                className="text-xs"
+              >
                 {level ? `+${level}` : 'No key'}
               </Badge>
             </MobileCharacterRow>
@@ -283,7 +284,7 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
       const lockouts = char.weeklyActivities?.[0]?.lockouts;
       return lockouts?.some(
         (l) =>
-          l.instanceId === row.raid.id &&
+          l.instanceId === row.raid.instanceId &&
           l.difficulty === row.difficulty &&
           l.bossesKilled > 0,
       );
@@ -300,7 +301,7 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
       <CardContent className="px-3 pb-2">
         {activeRows.map((row) => (
           <div
-            key={`${row.raid.id}-${row.difficulty}`}
+            key={`${row.raid.instanceId}-${row.difficulty}`}
             className="mb-2 last:mb-0"
           >
             <div className="text-xs text-muted-foreground mb-1">
@@ -310,11 +311,11 @@ function MobileLockoutCard({ characters }: { characters: Character[] }) {
               const lockouts = char.weeklyActivities?.[0]?.lockouts;
               const lockout = lockouts?.find(
                 (l) =>
-                  l.instanceId === row.raid.id &&
+                  l.instanceId === row.raid.instanceId &&
                   l.difficulty === row.difficulty,
               );
               const killed = lockout?.bossesKilled ?? 0;
-              const total = lockout?.bossCount ?? row.raid.bossCount;
+              const total = lockout?.bossCount ?? row.raid.bosses;
               return (
                 <MobileCharacterRow key={char.id} character={char}>
                   <span

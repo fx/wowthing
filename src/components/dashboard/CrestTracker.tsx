@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@fx/ui';
+import type { DashboardData } from '~/server/functions/activities';
 import { MatrixGrid } from './MatrixGrid';
 import { StatusCell } from './StatusCell';
-import type { DashboardData } from '~/server/functions/activities';
+import { DAWNCREST_TIERS } from './constants';
 
 type Character = DashboardData['characters'][number];
 
@@ -10,14 +11,6 @@ interface CrestTrackerProps {
   collapsedColumns: Set<string>;
   onToggleCollapse: (id: string) => void;
 }
-
-const DAWNCREST_TIERS = [
-  { key: 'adventurer', id: 3383, name: 'Adventurer' },
-  { key: 'veteran', id: 3341, name: 'Veteran' },
-  { key: 'champion', id: 3343, name: 'Champion' },
-  { key: 'hero', id: 3345, name: 'Hero' },
-  { key: 'myth', id: 3348, name: 'Myth' },
-] as const;
 
 export function CrestTracker({
   characters,
@@ -38,13 +31,13 @@ export function CrestTracker({
           {({ characters, isCollapsed }) => (
             <>
               {DAWNCREST_TIERS.map((tier) => (
-                <tr key={tier.key}>
+                <tr key={tier.currencyId}>
                   <td className="sticky left-0 z-10 bg-card p-2 text-sm">
                     {tier.name}
                   </td>
                   {characters.map((char) => {
                     const currency = char.currencies?.find(
-                      (c) => c.currencyId === tier.id,
+                      (c) => c.currencyId === tier.currencyId,
                     );
 
                     if (!currency || currency.weekMax == null) {

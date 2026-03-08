@@ -1,12 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, Progress } from '@fx/ui';
 import type { DashboardData } from '~/server/functions/activities';
-
-const FACTION_MAP: Record<number, string> = {
-  2601: 'Silvermoon Court',
-  2602: 'Amani Tribe',
-  2603: "Hara'ti",
-  2604: 'Singularity',
-};
+import { MIDNIGHT_FACTIONS } from './constants';
 
 interface RenownSectionProps {
   renown: DashboardData['renown'];
@@ -21,13 +15,12 @@ export function RenownSection({ renown }: RenownSectionProps) {
         <CardTitle className="text-sm">Renown (Account-wide)</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {Object.entries(FACTION_MAP).map(([factionIdStr, name]) => {
-          const factionId = Number(factionIdStr);
-          const data = renown.find((r) => r.factionId === factionId);
+        {MIDNIGHT_FACTIONS.map((faction) => {
+          const data = renown.find((r) => r.factionId === faction.id);
           const level = data?.renownLevel ?? 0;
           return (
-            <div key={factionId} className="flex items-center gap-3">
-              <span className="text-sm font-medium w-40">{name}</span>
+            <div key={faction.id} className="flex items-center gap-3">
+              <span className="text-sm font-medium w-40">{faction.name}</span>
               <Progress value={(level / 20) * 100} className="flex-1 h-3" />
               <span className="text-sm text-muted-foreground w-12 text-right">
                 {level}/20
